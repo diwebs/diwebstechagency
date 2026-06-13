@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --color-brand-dark-primary: #2F3136;
+    --color-brand-dark-secondary: #1E2125;
+    --color-brand-teal: #0097A7;
+    --color-brand-cyan: #00C2D1;
+    --color-brand-white: #F8FAFC;
+    --color-brand-gray: #94A3B8;
+    
+    --font-sans: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Custom premium design system utilities */
+@layer utilities {
+    .glass-card {
+        background: rgba(30, 33, 37, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 151, 167, 0.15);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    
+    .glass-card-hover:hover {
+        border-color: rgba(0, 194, 209, 0.4);
+        box-shadow: 0 0 20px rgba(0, 194, 209, 0.15);
+        transform: translateY(-2px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .neon-glow-teal {
+        box-shadow: 0 0 40px rgba(0, 151, 167, 0.3);
+    }
+
+    .neon-glow-cyan {
+        box-shadow: 0 0 40px rgba(0, 194, 209, 0.3);
+    }
+
+    .text-glow {
+        text-shadow: 0 0 10px rgba(0, 194, 209, 0.5);
+    }
+
+    .tech-grid {
+        background-size: 40px 40px;
+        background-image: 
+            linear-gradient(to right, rgba(0, 151, 167, 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 151, 167, 0.04) 1px, transparent 1px);
+    }
+}
+
+/* Animations */
+@keyframes float-slow {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.05); }
+}
+
+@keyframes pulse-slow {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.1); }
+}
+
+.animate-float {
+    animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 12s ease-in-out infinite;
+}
+
+.bg-dot-matrix {
+    background-image: radial-gradient(rgba(0, 194, 209, 0.07) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+

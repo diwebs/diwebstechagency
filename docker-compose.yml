@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: diwebs-agency-app
+    container_name: diwebs_app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    volumes:
+      - ./:/var/www
+    networks:
+      - diwebs-network
+
+  webserver:
+    image: nginx:alpine
+    container_name: diwebs_webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d/
+    networks:
+      - diwebs-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: diwebs_db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: diwebs_db
+      POSTGRES_USER: diwebs_user
+      POSTGRES_PASSWORD: diwebs_password
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - diwebs-network
+
+  redis:
+    image: redis:alpine
+    container_name: diwebs_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - diwebs-network
+
+networks:
+  diwebs-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
+  redisdata:
+    driver: local

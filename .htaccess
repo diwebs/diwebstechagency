@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Secure htaccess file itself
+    <Files .htaccess>
+        order allow,deny
+        deny from all
+    </Files>
+
+    # Disable directory browsing
+    Options -Indexes
+
+    # Redirect root requests to /public/index.php
+    RewriteRule ^$ public/ [L]
+    
+    # Redirect all other folder requests to public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
