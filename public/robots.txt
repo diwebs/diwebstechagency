@@ -1,2 +1,27 @@
 User-agent: *
-Disallow:
+
+# Allow public corporate pages
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /solutions
+Allow: /portfolio
+Allow: /case-studies
+Allow: /blog
+Allow: /contact
+
+# Block private portals from indexing
+Disallow: /admin/
+Disallow: /portal/
+Disallow: /academy/
+Disallow: /cbt/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+
+# Block Laravel internals
+Disallow: /storage/
+Disallow: /vendor/
+
+Sitemap: https://diwebs.com/sitemap.xml
