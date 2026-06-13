@@ -22,13 +22,43 @@ Route::post('/contact/submit', [PageController::class, 'submitLead'])->name('lea
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login/2fa/verify', [AuthController::class, 'verifyLogin2FA'])->name('login.2fa.verify');
+
+// Hidden Custom Admin Login Gate
+Route::get('/secure-gate-admin', [AuthController::class, 'showAdminLogin'])->name('admin.login-gate');
+
+// Password Reset Routes
+Route::get('/password/reset', [AuthController::class, 'showResetRequest'])->name('password.request');
+Route::post('/password/email', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/password/reset/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
+
+// Registration & OTP flow
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/otp/send', [AuthController::class, 'sendRegistrationOtp'])->name('register.otp.send');
+Route::post('/register/otp/verify', [AuthController::class, 'verifyRegistrationOtp'])->name('register.otp.verify');
+
+// Passkeys authentication challenge
+Route::post('/auth/passkeys/login-challenge', [AuthController::class, 'passkeyLoginChallenge']);
+Route::post('/auth/passkeys/verify', [AuthController::class, 'passkeyVerify']);
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/auth/dev/{role}', [AuthController::class, 'devLogin'])->name('auth.dev-login');
 
 // Authenticated Routes Group
 Route::middleware(['auth'])->group(function () {
+
+    // Unified Profile Security Settings
+    Route::get('/profile/security', [\App\Http\Controllers\SecurityController::class, 'showSecuritySettings'])->name('profile.security');
+    Route::post('/profile/2fa/enable', [\App\Http\Controllers\SecurityController::class, 'enable2fa'])->name('profile.2fa.enable');
+    Route::post('/profile/2fa/disable', [\App\Http\Controllers\SecurityController::class, 'disable2fa'])->name('profile.2fa.disable');
+    Route::post('/profile/passkeys/challenge', [\App\Http\Controllers\SecurityController::class, 'passkeyChallenge']);
+    Route::post('/profile/passkeys/store', [\App\Http\Controllers\SecurityController::class, 'passkeyStore']);
+    Route::post('/profile/passkeys/{id}/delete', [\App\Http\Controllers\SecurityController::class, 'passkeyDelete']);
+    Route::post('/profile/devices/{id}/revoke', [\App\Http\Controllers\SecurityController::class, 'revokeSession']);
+    Route::post('/profile/devices/revoke-all', [\App\Http\Controllers\SecurityController::class, 'revokeAllOtherSessions']);
+    Route::post('/profile/password/update', [\App\Http\Controllers\SecurityController::class, 'updatePassword'])->name('profile.password.update');
 
     // CBT Candidate Portal Routing
     Route::prefix('cbt')->name('cbt.')->group(function () {

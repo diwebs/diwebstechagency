@@ -92,10 +92,10 @@
     /* Ken Burns zoom effect */
     @keyframes kenburns {
         0% {
-            transform: scale(1.02);
+            transform: scale(1);
         }
         100% {
-            transform: scale(1.08);
+            transform: scale(1.06);
         }
     }
 
@@ -122,13 +122,13 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
     
-    /* Ensure slider wrapper image elements are fully stretched and display preloader cleanly */
+    /* Ensure slider wrapper image elements are fully stretched */
     .hero-slider-img-wrap {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
-        transform: scale(1.08);
+        transform: scale(1.05);
         will-change: transform;
     }
 
@@ -136,11 +136,6 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        opacity: 0;
-        transition: opacity 0.6s ease-in-out;
-    }
-
-    .hero-slider-img.swiper-lazy-loaded {
         opacity: 1;
     }
 </style>
@@ -153,29 +148,23 @@
                 @foreach($slides as $index => $slide)
                     <div class="swiper-slide" data-label="{{ $slide['label'] }}">
                         <div class="hero-slider-img-wrap">
-                            <!-- Eager-load the first slide to prevent LCP issue; lazy-load the rest -->
-                            @if($index === 0)
-                                <img src="{{ $slide['image'] }}" class="hero-slider-img swiper-lazy-loaded" style="opacity: 1;" alt="{{ $slide['label'] }}">
-                            @else
-                                <img data-src="{{ $slide['image'] }}" class="swiper-lazy hero-slider-img" alt="{{ $slide['label'] }}">
-                                <div class="swiper-lazy-preloader swiper-lazy-preloader-white"></div>
-                            @endif
+                            <img src="{{ $slide['image'] }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" class="hero-slider-img" alt="{{ $slide['label'] }}">
                         </div>
                         <div class="slider-overlay"></div>
                     </div>
                 @endforeach
             </div>
-            
-            <!-- Custom Particles Canvas inside the background container -->
-            <canvas id="hero-particles" class="absolute inset-0 z-3 pointer-events-none"></canvas>
+        </div>
+        
+        <!-- Custom Particles Canvas inside the background container (positioned absolutely relative to wrapper) -->
+        <canvas id="hero-particles" class="absolute inset-0 z-5 pointer-events-none"></canvas>
 
-            <!-- Floating tag showcasing current active slide capabilities -->
-            <div class="slide-info-tag select-none">
-                <span class="h-2 w-2 rounded-full bg-brand-cyan animate-pulse"></span>
-                <span id="active-slide-label" class="text-xs font-semibold text-brand-white tracking-wider uppercase opacity-85 transition-opacity duration-300">
-                    {{ $slides[0]['label'] }}
-                </span>
-            </div>
+        <!-- Floating tag showcasing current active slide capabilities -->
+        <div class="slide-info-tag select-none">
+            <span class="h-2 w-2 rounded-full bg-brand-cyan animate-pulse"></span>
+            <span id="active-slide-label" class="text-xs font-semibold text-brand-white tracking-wider uppercase opacity-85 transition-opacity duration-300">
+                {{ $slides[0]['label'] }}
+            </span>
         </div>
     </div>
 
@@ -344,6 +333,11 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Swiper Initialization
+        if (typeof Swiper === 'undefined') {
+            console.error('Swiper CDN is unavailable. Falling back to simple carousel.');
+            return;
+        }
+
         const swiper = new Swiper('.hero-swiper', {
             loop: true,
             effect: 'fade',
@@ -355,23 +349,22 @@
                 disableOnInteraction: false,
             },
             speed: 1500, // 1.5s fade duration
-            lazy: {
-                loadPrevNext: true,
-                loadPrevNextAmount: 1
-            },
             on: {
                 slideChange: function () {
-                    const activeSlide = this.slides[this.activeIndex];
-                    if (!activeSlide) return;
-                    const label = activeSlide.getAttribute('data-label');
-                    const labelEl = document.getElementById('active-slide-label');
-                    if (labelEl && label) {
-                        labelEl.classList.add('opacity-0');
-                        setTimeout(() => {
-                            labelEl.textContent = label;
-                            labelEl.classList.remove('opacity-0');
-                        }, 300);
-                    }
+                    // Safe selector fallback for Swiper 11 loop duplication active class
+                    setTimeout(() => {
+                        const activeSlide = this.el.querySelector('.swiper-slide-active');
+                        if (!activeSlide) return;
+                        const label = activeSlide.getAttribute('data-label');
+                        const labelEl = document.getElementById('active-slide-label');
+                        if (labelEl && label) {
+                            labelEl.classList.add('opacity-0');
+                            setTimeout(() => {
+                                labelEl.textContent = label;
+                                labelEl.classList.remove('opacity-0');
+                            }, 300);
+                        }
+                    }, 50);
                 }
             }
         });

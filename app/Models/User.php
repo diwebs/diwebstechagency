@@ -90,4 +90,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(SecurityLog::class);
     }
+
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    public function passkeys()
+    {
+        return $this->hasMany(UserPasskey::class);
+    }
+
+    public function otpCodes()
+    {
+        return $this->hasMany(OtpCode::class);
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class);
+    }
 }

@@ -56,6 +56,8 @@
                                 <a href="{{ route('portal.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Client Area</a>
                             @endif
 
+                            <a href="{{ route('profile.security') }}" class="text-xs font-medium text-brand-cyan hover:text-brand-white transition-colors">Security</a>
+
                             <form action="{{ route('logout') }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-xs font-medium text-brand-gray hover:text-brand-white transition-colors">Logout</button>

@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $admin = User::create([
             'name' => 'Diwebs Administrator',
             'email' => 'admin@diwebs.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
             'role' => 'super_admin',
             'status' => 'active'
         ]);
@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
         $student = User::create([
             'name' => 'Tobi Alabi',
             'email' => 'student@diwebs.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
             'role' => 'student',
             'status' => 'active'
         ]);
@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
         $client = User::create([
             'name' => 'Sarah Jenkins (E-Gov Group)',
             'email' => 'client@diwebs.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
             'role' => 'client',
             'status' => 'active'
         ]);
@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
         $candidate = User::create([
             'name' => 'Michael Okafor',
             'email' => 'candidate@diwebs.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
             'role' => 'candidate',
             'status' => 'active'
         ]);
