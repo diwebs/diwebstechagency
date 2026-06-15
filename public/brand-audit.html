@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Diwebs Brand SVG Review</title>
+  <style>
+    body { background:#111; font-family:system-ui,sans-serif; color:#eee; padding:32px; }
+    h1 { color:#00BCD4; margin-bottom:24px; }
+    h2 { color:#888; font-size:.85rem; text-transform:uppercase; letter-spacing:.1em; margin:32px 0 12px; }
+    .grid { display:flex; flex-wrap:wrap; gap:24px; }
+    .card {
+      background:#1e2125; border-radius:16px; padding:20px 24px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+      min-width:110px;
+    }
+    .card img { display:block; }
+    .card span { font-size:.75rem; color:#aaa; }
+    /* Stripe of background colours to test transparency -->
+    .on-white { background:white; border-radius:8px; padding:4px; }
+    .on-dark  { background:#1e2125; border-radius:8px; padding:4px; }
+    .sizes { display:flex; gap:8px; align-items:center; }
+  </style>
+</head>
+<body>
+  <h1>Diwebs Tech — Brand SVG Audit</h1>
+
+  <h2>Logo mark (transparent bg — works on light &amp; dark)</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="sizes">
+        <!-- 36px = h-9 used in nav -->
+        <img src="/images/brand/diwebs-logo.svg" width="36" height="36" alt="logo 36px"/>
+        <!-- 28px = h-7 used in footer -->
+        <img src="/images/brand/diwebs-logo.svg" width="28" height="28" alt="logo 28px"/>
+        <!-- 18px = small -->
+        <img src="/images/brand/diwebs-logo.svg" width="18" height="18" alt="logo 18px"/>
+      </div>
+      <span>diwebs-logo.svg (36 / 28 / 18 px)</span>
+    </div>
+    <div class="card" style="background:#f3f4f6">
+      <div class="sizes">
+        <img src="/images/brand/diwebs-logo.svg" width="36" height="36" alt="logo on light"/>
+        <img src="/images/brand/diwebs-logo.svg" width="28" height="28" alt="logo on light"/>
+      </div>
+      <span style="color:#333">on light bg</span>
+    </div>
+  </div>
+
+  <h2>PWA / App icons</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="/icons/icon-192x192.svg" width="64" height="64" alt="icon-192"/>
+      <span>icon-192x192.svg</span>
+    </div>
+    <div class="card">
+      <img src="/icons/icon-512x512.svg" width="64" height="64" alt="icon-512"/>
+      <span>icon-512x512.svg</span>
+    </div>
+  </div>
+
+  <h2>Payment provider icons (used at h-9 = 36px)</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="/images/brand/paystack.svg" width="36" height="36" alt="paystack"/>
+      <span>paystack.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/flutterwave.svg" width="36" height="36" alt="flutterwave"/>
+      <span>flutterwave.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/stripe.svg" width="36" height="36" alt="stripe"/>
+      <span>stripe.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/paypal.svg" width="36" height="36" alt="paypal"/>
+      <span>paypal.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/bank.svg" width="36" height="36" alt="bank"/>
+      <span>bank.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/bitcoin.svg" width="36" height="36" alt="bitcoin"/>
+      <span>bitcoin.svg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/usdt.svg" width="36" height="36" alt="usdt"/>
+      <span>usdt.svg</span>
+    </div>
+  </div>
+
+  <h2>Auth / SSO icons (used at h-4 = 16px)</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="/images/brand/google.svg" width="16" height="16" alt="google"/>
+      <span>google.svg (16px)</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/microsoft.svg" width="16" height="16" alt="microsoft"/>
+      <span>microsoft.svg (16px)</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/apple.svg" width="16" height="16" alt="apple"/>
+      <span style="color:#f88">apple.svg — white fill<br/>(invisible on dark card)</span>
+    </div>
+    <div class="card" style="background:#0077B5">
+      <img src="/images/brand/apple.svg" width="16" height="16" alt="apple on bg"/>
+      <span style="color:#eee">apple on coloured bg</span>
+    </div>
+    <div class="card">
+      <img src="/images/brand/github.svg" width="16" height="16" alt="github"/>
+      <span style="color:#f88">github.svg — white fill<br/>(invisible on dark card)</span>
+    </div>
+    <div class="card" style="background:#24292e">
+      <img src="/images/brand/github.svg" width="16" height="16" alt="github on bg"/>
+      <span>github on dark bg</span>
+    </div>
+  </div>
+</body>
+</html>

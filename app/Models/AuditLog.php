@@ -25,6 +25,15 @@ class AuditLog extends Model
         'created_at' => 'datetime'
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($log) {
+            if (empty($log->created_at)) {
+                $log->created_at = now();
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

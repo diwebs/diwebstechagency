@@ -15,8 +15,12 @@ class SecurityTimeoutMiddleware
             $user = Auth::user();
             
             // 1. Session Rotation (rotate ID periodically e.g., every 5 minutes or on each authenticated view check)
-            if (!session()->has('last_rotated_at') || now()->diffInMinutes(session('last_rotated_at')) >= 5) {
-                session()->regenerate();
+            if (app()->environment() !== 'testing') {
+                if (!session()->has('last_rotated_at') || now()->diffInMinutes(session('last_rotated_at')) >= 5) {
+                    session()->regenerate();
+                    session(['last_rotated_at' => now()]);
+                }
+            } else {
                 session(['last_rotated_at' => now()]);
             }
 

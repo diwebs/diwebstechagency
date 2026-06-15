@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+  <!-- Paystack brand cyan background circle -->
+  <circle cx="30" cy="30" r="30" fill="#0BA4DB"/>
+  <!-- Paystack official stacked-bars icon mark (adapted from PaystackHQ/nigerialogos) -->
+  <!-- The Paystack icon = 4 horizontal rounded bars, bottom one is shorter -->
+  <rect x="10" y="7.5"  width="40" height="6" rx="3" fill="white"/>
+  <rect x="10" y="20.5" width="40" height="6" rx="3" fill="white"/>
+  <rect x="10" y="33.5" width="40" height="6" rx="3" fill="white"/>
+  <rect x="10" y="46.5" width="25" height="6" rx="3" fill="white"/>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "Diwebs Tech Agency",
+  "short_name": "Diwebs",
+  "description": "Enterprise Digital Infrastructure, AI solutions, CBT systems, and LMS platforms.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1E2125",
+  "theme_color": "#0097A7",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -24,4 +24,9 @@ class Milestone extends Model
     {
         return $this->hasOne(Invoice::class);
     }
+
+    public function logs()
+    {
+        return $this->hasMany(MilestoneLog::class);
+    }
 }

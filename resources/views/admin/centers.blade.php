@@ -1,12 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'CBT Centers - Admin Control Center')
 
-@section('content')
-<div class="mx-auto max-w-7xl px-6 lg:px-8">
+@section('admin_content')
+<div>
     <div class="mb-8">
-        <a href="{{ route('admin.dashboard') }}" class="text-xs text-brand-cyan hover:underline">← Admin Dashboard</a>
-        <h1 class="text-2xl font-bold text-brand-white mt-2">CBT Center Network</h1>
+        <h1 class="text-2xl font-bold text-brand-white">CBT Center Network</h1>
         <p class="text-sm text-brand-gray mt-1">Overview of all registered physical examination centers and their operational status.</p>
     </div>
 

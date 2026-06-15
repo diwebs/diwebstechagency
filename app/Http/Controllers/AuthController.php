@@ -380,7 +380,7 @@ class AuthController extends Controller
 
     public function devLogin(Request $request, $role)
     {
-        $email = $role . '@diwebs.com';
+        $email = $role . '@diwebstechagency.website';
         $user = User::where('email', $email)->first();
 
         if (!$user) {

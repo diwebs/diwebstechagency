@@ -34,5 +34,10 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         }
+
+        // Register global @money blade directive
+        \Illuminate\Support\Facades\Blade::directive('money', function ($expression) {
+            return "<?php echo \App\Helpers\PaymentHelper::format($expression); ?>";
+        });
     }
 }

@@ -1,19 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'User Management - Admin Control Center')
 
-@section('content')
-<div class="mx-auto max-w-7xl px-6 lg:px-8">
+@section('admin_content')
+<div>
     <div class="mb-8 flex items-center justify-between">
         <div>
-            <a href="{{ route('admin.dashboard') }}" class="text-xs text-brand-cyan hover:underline">← Admin Dashboard</a>
-            <h1 class="text-2xl font-bold text-brand-white mt-2">User Management</h1>
+            <h1 class="text-2xl font-bold text-brand-white">User Management</h1>
             <p class="text-sm text-brand-gray mt-1">Manage all ecosystem users, roles, and account statuses.</p>
         </div>
         <span class="text-xs text-brand-gray">{{ $users->total() }} total users</span>
     </div>
 
-    <div class="glass-card rounded-2xl overflow-hidden">
+    <div class="glass-card rounded-2xl overflow-hidden border border-brand-teal/15">
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
                 <thead>

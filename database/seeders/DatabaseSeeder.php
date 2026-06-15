@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         // 1. Seed Users for each role
         $admin = User::create([
             'name' => 'Diwebs Administrator',
-            'email' => 'admin@diwebs.com',
+            'email' => 'admin@diwebstechagency.website',
             'password' => 'password',
             'role' => 'super_admin',
             'status' => 'active'
@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
 
         $student = User::create([
             'name' => 'Tobi Alabi',
-            'email' => 'student@diwebs.com',
+            'email' => 'student@diwebstechagency.website',
             'password' => 'password',
             'role' => 'student',
             'status' => 'active'
@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
 
         $client = User::create([
             'name' => 'Sarah Jenkins (E-Gov Group)',
-            'email' => 'client@diwebs.com',
+            'email' => 'client@diwebstechagency.website',
             'password' => 'password',
             'role' => 'client',
             'status' => 'active'
@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
 
         $candidate = User::create([
             'name' => 'Michael Okafor',
-            'email' => 'candidate@diwebs.com',
+            'email' => 'candidate@diwebstechagency.website',
             'password' => 'password',
             'role' => 'candidate',
             'status' => 'active'
@@ -55,8 +55,8 @@ class DatabaseSeeder extends Seeder
             'address' => '102 Herbert Macaulay Way, Yaba',
             'city' => 'Lagos',
             'capacity' => 150,
-            'contact_email' => 'lagos@diwebs.com',
-            'contact_phone' => '+2348011223344',
+            'contact_email' => 'lagos@diwebstechagency.website',
+            'contact_phone' => '+2349064130817',
             'status' => 'active'
         ]);
 
@@ -66,8 +66,8 @@ class DatabaseSeeder extends Seeder
             'address' => 'Block C, Garki Mall',
             'city' => 'Abuja',
             'capacity' => 200,
-            'contact_email' => 'abuja@diwebs.com',
-            'contact_phone' => '+2348055667788',
+            'contact_email' => 'abuja@diwebstechagency.website',
+            'contact_phone' => '+2349064130817',
             'status' => 'active'
         ]);
 

@@ -1,16 +1,15 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Exam Sessions - Admin Control Center')
 
-@section('content')
-<div class="mx-auto max-w-7xl px-6 lg:px-8">
+@section('admin_content')
+<div>
     <div class="mb-8">
-        <a href="{{ route('admin.dashboard') }}" class="text-xs text-brand-cyan hover:underline">← Admin Dashboard</a>
-        <h1 class="text-2xl font-bold text-brand-white mt-2">CBT Exam Sessions</h1>
+        <h1 class="text-2xl font-bold text-brand-white">CBT Exam Sessions</h1>
         <p class="text-sm text-brand-gray mt-1">Monitor all candidate exam runs, anti-cheat flags, and auto-graded scores.</p>
     </div>
 
-    <div class="glass-card rounded-2xl overflow-hidden">
+    <div class="glass-card rounded-2xl overflow-hidden border border-brand-teal/15">
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
                 <thead>

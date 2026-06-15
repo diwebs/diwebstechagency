@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+  <!-- Bank icon - grey circle with white bank building -->
+  <circle cx="30" cy="30" r="30" fill="#64748B"/>
+  <!-- Roof/triangle -->
+  <polygon points="30,10 12,22 48,22" fill="white"/>
+  <!-- Building columns -->
+  <rect x="14" y="23" width="4" height="18" fill="white"/>
+  <rect x="21" y="23" width="4" height="18" fill="white"/>
+  <rect x="28" y="23" width="4" height="18" fill="white"/>
+  <rect x="35" y="23" width="4" height="18" fill="white"/>
+  <rect x="42" y="23" width="4" height="18" fill="white"/>
+  <!-- Base bar -->
+  <rect x="12" y="41" width="36" height="4" rx="1" fill="white"/>
+  <!-- Foundation -->
+  <rect x="10" y="45" width="40" height="4" rx="1" fill="white"/>
+</svg>

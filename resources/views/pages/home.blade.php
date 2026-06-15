@@ -195,25 +195,25 @@
             <!-- Metric Card 1 -->
             <div class="glass-card glass-card-hover rounded-2xl p-6 text-center">
                 <dt class="text-xs font-semibold text-brand-cyan uppercase tracking-wider">Projects Delivered</dt>
-                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">120+</dd>
+                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">50+</dd>
                 <div class="mt-1 text-[10px] text-emerald-400">99.8% Success Rate</div>
             </div>
             <!-- Metric Card 2 -->
             <div class="glass-card glass-card-hover rounded-2xl p-6 text-center">
                 <dt class="text-xs font-semibold text-brand-cyan uppercase tracking-wider">Students Trained</dt>
-                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">15,000+</dd>
+                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">20+</dd>
                 <div class="mt-1 text-[10px] text-brand-cyan">Global Academy Partners</div>
             </div>
             <!-- Metric Card 3 -->
             <div class="glass-card glass-card-hover rounded-2xl p-6 text-center">
                 <dt class="text-xs font-semibold text-brand-cyan uppercase tracking-wider">CBT Centers Powered</dt>
-                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">450+</dd>
+                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">2</dd>
                 <div class="mt-1 text-[10px] text-emerald-400">5M+ Exams Completed</div>
             </div>
             <!-- Metric Card 4 -->
             <div class="glass-card glass-card-hover rounded-2xl p-6 text-center">
                 <dt class="text-xs font-semibold text-brand-cyan uppercase tracking-wider">Countries Reached</dt>
-                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">12+</dd>
+                <dd class="mt-2 text-3xl font-extrabold text-brand-white tracking-tight">5</dd>
                 <div class="mt-1 text-[10px] text-brand-cyan">Cross-border Deployments</div>
             </div>
         </div>

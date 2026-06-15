@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="192" height="192">
+  <!-- Rounded dark background matching Diwebs brand colors -->
+  <rect width="512" height="512" rx="128" fill="#1E2125"/>
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00C2D1" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#0097A7" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#1E2125" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="d-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C2D1"/>
+      <stop offset="100%" stop-color="#0097A7"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#00C2D1" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background pulsing soft glow -->
+  <circle cx="256" cy="256" r="240" fill="url(#glow)"/>
+  <!-- Glowing border line -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="url(#d-gradient)" stroke-width="4" stroke-opacity="0.2"/>
+  <!-- Stylized capital 'D' representing Diwebs Tech Agency -->
+  <path d="M170 128 C170 128, 285 128, 345 188 C405 248, 405 312, 345 372 C285 432, 170 432, 170 432 Z" 
+        fill="none" stroke="url(#d-gradient)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  <!-- Vertical line of the 'D' -->
+  <path d="M205 128 L205 432" stroke="url(#d-gradient)" stroke-width="44" stroke-linecap="round" filter="url(#shadow)"/>
+</svg>

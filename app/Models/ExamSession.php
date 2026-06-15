@@ -28,6 +28,36 @@ class ExamSession extends Model
                 $session->id = (string) Str::uuid();
             }
         });
+
+        static::created(function ($session) {
+            $cbtSession = CbtExamSession::find($session->id);
+            if (!$cbtSession) {
+                CbtExamSession::create([
+                    'id' => $session->id,
+                    'exam_id' => $session->exam_id,
+                    'user_id' => $session->user_id,
+                    'cbt_center_id' => $session->cbt_center_id,
+                    'exam_mode' => 'standard',
+                    'status' => $session->status,
+                    'score' => $session->score,
+                    'anti_cheat_flags' => $session->anti_cheat_flags ?? 0,
+                    'started_at' => $session->started_at,
+                    'ended_at' => $session->ended_at
+                ]);
+            }
+        });
+
+        static::updated(function ($session) {
+            $cbtSession = CbtExamSession::find($session->id);
+            if ($cbtSession) {
+                $cbtSession->update([
+                    'status' => $session->status,
+                    'score' => $session->score,
+                    'anti_cheat_flags' => $session->anti_cheat_flags ?? 0,
+                    'ended_at' => $session->ended_at
+                ]);
+            }
+        });
     }
 
     public function exam()

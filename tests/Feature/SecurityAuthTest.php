@@ -18,7 +18,7 @@ class SecurityAuthTest extends TestCase
         // Min length 12
         $response = $this->post('/register', [
             'name' => 'Test User',
-            'email' => 'test@diwebs.com',
+            'email' => 'test@diwebstechagency.website',
             'password' => 'weakpass',
             'role' => 'student'
         ]);
@@ -31,7 +31,7 @@ class SecurityAuthTest extends TestCase
         // Registration without validating OTP code session first
         $response = $this->post('/register', [
             'name' => 'Test User',
-            'email' => 'test@diwebs.com',
+            'email' => 'test@diwebstechagency.website',
             'password' => 'SecurePassword123!',
             'role' => 'student'
         ]);
@@ -41,7 +41,7 @@ class SecurityAuthTest extends TestCase
 
     public function test_register_otp_dispatch_and_verification()
     {
-        $email = 'test@diwebs.com';
+        $email = 'test@diwebstechagency.website';
 
         // 1. Request OTP Code
         $sendResponse = $this->postJson('/register/otp/send', ['email' => $email]);
@@ -67,7 +67,7 @@ class SecurityAuthTest extends TestCase
         // Seed an admin user
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@diwebs.com',
+            'email' => 'admin@diwebstechagency.website',
             'password' => 'SecurePassword123!',
             'role' => 'super_admin'
         ]);
@@ -88,7 +88,7 @@ class SecurityAuthTest extends TestCase
     {
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@diwebs.com',
+            'email' => 'admin@diwebstechagency.website',
             'password' => 'SecurePassword123!',
             'role' => 'super_admin'
         ]);
@@ -121,7 +121,7 @@ class SecurityAuthTest extends TestCase
     public function test_rate_limiting_cooldown_triggers()
     {
         // Setup rate limit hit
-        $email = 'bruteforce@diwebs.com';
+        $email = 'bruteforce@diwebstechagency.website';
 
         for ($i = 0; $i < 6; $i++) {
             $response = $this->postJson('/login', [

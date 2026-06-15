@@ -1,9 +1,10 @@
-@extends('layouts.app')
+
+@extends('layouts.admin')
 
 @section('title', 'Admin Control Center - Diwebs Tech Operations')
 
-@section('content')
-<div class="mx-auto max-w-7xl px-6 lg:px-8">
+@section('admin_content')
+<div>
     <!-- Header -->
     <div class="mb-10 flex items-center justify-between">
         <div>
@@ -40,24 +41,8 @@
         </div>
         <div class="glass-card rounded-2xl p-5 text-center">
             <span class="block text-[10px] uppercase font-semibold text-brand-cyan tracking-wider">Revenue</span>
-            <strong class="block text-2xl font-bold text-emerald-400 mt-1">${{ number_format($stats['total_revenue'], 0) }}</strong>
+            <strong class="block text-2xl font-bold text-emerald-400 mt-1">{{ \App\Helpers\PaymentHelper::format($stats['total_revenue'], 0) }}</strong>
         </div>
-    </div>
-
-    <!-- Navigation Links Bar -->
-    <div class="flex flex-wrap gap-3 mb-10">
-        <a href="{{ route('admin.users') }}" class="rounded-lg glass-card px-5 py-2.5 text-xs font-bold text-brand-cyan hover:border-brand-cyan/40 transition-all">
-            👥 User Management
-        </a>
-        <a href="{{ route('admin.exams') }}" class="rounded-lg glass-card px-5 py-2.5 text-xs font-bold text-brand-cyan hover:border-brand-cyan/40 transition-all">
-            📋 Exam Sessions
-        </a>
-        <a href="{{ route('admin.centers') }}" class="rounded-lg glass-card px-5 py-2.5 text-xs font-bold text-brand-cyan hover:border-brand-cyan/40 transition-all">
-            🏢 CBT Centers
-        </a>
-        <a href="{{ route('admin.security-logs') }}" class="rounded-lg glass-card px-5 py-2.5 text-xs font-bold text-brand-cyan hover:border-brand-cyan/40 transition-all">
-            🔐 Security Audit Logs
-        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">

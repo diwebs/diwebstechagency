@@ -75,3 +75,70 @@
     background-size: 24px 24px;
 }
 
+/* Touch accessibility & mobile optimization layer */
+@layer base {
+    /* Safe notch spacing utilities */
+    :root {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    .pt-safe-top {
+        padding-top: var(--safe-top);
+    }
+    
+    .pb-safe-bottom {
+        padding-bottom: var(--safe-bottom);
+    }
+
+    /* Standard inputs size min 48px height and prevent iOS auto-zoom */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    select,
+    textarea {
+        min-height: 48px !important;
+        font-size: 16px !important;
+    }
+
+    /* Standard button touch sizes */
+    button,
+    .btn,
+    header a.rounded-md,
+    footer a {
+        min-height: 48px;
+        min-width: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Swipeable table scrolling preservation */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .overflow-x-auto table {
+        min-width: 640px;
+    }
+}
+
+/* Scrollbar styling for touch swipe visibility */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(0, 194, 209, 0.2);
+    border-radius: 4px;
+}
+
+/* Safe area notches adjustments */
+@media(max-width: 767px) {
+    header {
+        padding-top: max(8px, env(safe-area-inset-top));
+    }
+}
+
+

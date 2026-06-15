@@ -1,16 +1,15 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Security Audit Logs - Admin Control Center')
 
-@section('content')
-<div class="mx-auto max-w-7xl px-6 lg:px-8">
+@section('admin_content')
+<div>
     <div class="mb-8">
-        <a href="{{ route('admin.dashboard') }}" class="text-xs text-brand-cyan hover:underline">← Admin Dashboard</a>
-        <h1 class="text-2xl font-bold text-brand-white mt-2">Security Audit Logs</h1>
+        <h1 class="text-2xl font-bold text-brand-white">Security Audit Logs</h1>
         <p class="text-sm text-brand-gray mt-1">Full tamper-evident log of all authentication events, tab switches, and anti-cheat triggers.</p>
     </div>
 
-    <div class="glass-card rounded-2xl overflow-hidden">
+    <div class="glass-card rounded-2xl overflow-hidden border border-brand-teal/15">
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
                 <thead>
