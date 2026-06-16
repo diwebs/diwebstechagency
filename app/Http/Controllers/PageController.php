@@ -33,7 +33,8 @@ class PageController extends Controller
 
     public function portfolio()
     {
-        return view('pages.portfolio');
+        $portfolios = \App\Models\Portfolio::orderBy('order', 'asc')->orderBy('created_at', 'desc')->get();
+        return view('pages.portfolio', compact('portfolios'));
     }
 
     public function caseStudies()

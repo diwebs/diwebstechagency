@@ -137,10 +137,11 @@
         
         <!-- Left Sidebar Navigation Menu -->
         <aside class="w-full lg:w-72 flex-shrink-0">
-            <div class="glass-card rounded-2xl p-6 sticky top-24 border border-brand-teal/20 shadow-xl space-y-4">
+            <!-- Desktop view vertical menu (hidden on mobile) -->
+            <div class="hidden lg:block glass-card rounded-2xl p-6 sticky top-24 border border-brand-teal/20 shadow-xl space-y-4">
                 <div class="pb-4 border-b border-brand-teal/15">
                     <h3 class="text-base font-bold text-brand-white">Workspace Center</h3>
-                    <p class="text-xs text-brand-gray mt-1">Sarah Jenkins (E-Gov Group)</p>
+                    <p class="text-xs text-brand-gray mt-1">{{ auth()->user()->name }}</p>
                 </div>
                 
                 <nav class="space-y-1">
@@ -165,28 +166,126 @@
                     <button @click="activeTab = 'billing'" :class="activeTab === 'billing' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>💳</span> Invoices &amp; Payments
                     </button>
-                    <button @click="activeTab = 'messages'" @click.away="" :class="activeTab === 'messages' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'messages'" :class="activeTab === 'messages' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>💬</span> Collaboration Hub
                     </button>
                     <button @click="activeTab = 'tickets'" :class="activeTab === 'tickets' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>🎟️</span> Support Helpdesk
                     </button>
-                    <button @click="activeTab = 'notifications'" :class="activeTab === 'notifications' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'notifications'" :class="activeTab === 'notifications' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>🔔</span> Notifications
                     </button>
-                    <button @click="activeTab = 'team'" :class="activeTab === 'team' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'team'" :class="activeTab === 'team' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>👥</span> Team Access
                     </button>
-                    <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>⚙️</span> Settings &amp; Security
                     </button>
-                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>⭐</span> Write a Review
                     </button>
-                    <button @click="activeTab = 'referrals'" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                    <button @click="activeTab = 'referrals'" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>🤝</span> Referral Program
                     </button>
                 </nav>
+            </div>
+
+            <!-- Mobile/Tablet view compact togglable accordion menu (hidden on desktop) -->
+            <div class="block lg:hidden glass-card rounded-xl p-4 border border-brand-teal/20 shadow-xl space-y-3" x-data="{ mobileOpen: false }">
+                <div class="flex items-center justify-between pb-3 border-b border-brand-teal/15">
+                    <div>
+                        <h3 class="text-xs font-mono uppercase text-brand-cyan">Workspace Center</h3>
+                        <p class="text-sm font-bold text-brand-white mt-0.5">{{ auth()->user()->name }}</p>
+                    </div>
+                    <!-- Menu Toggle Button -->
+                    <button @click="mobileOpen = !mobileOpen" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-teal/10 border border-brand-teal/30 text-brand-cyan text-xs font-bold transition-all hover:bg-brand-teal/25">
+                        <span>Menu</span>
+                        <svg class="h-3.5 w-3.5 transition-transform duration-200" :class="mobileOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Active tab quick banner (when menu is closed) -->
+                <div x-show="!mobileOpen" class="p-2.5 bg-brand-dark-secondary/50 rounded-lg flex items-center justify-between text-xs text-brand-white border border-brand-teal/5">
+                    <span class="flex items-center gap-2 font-semibold">
+                        <span x-html="activeTab === 'dashboard' ? '📊' : 
+                                      activeTab === 'projects' ? '📂' : 
+                                      activeTab === 'requests' ? '🚀' : 
+                                      activeTab === 'milestones' ? '🏆' : 
+                                      activeTab === 'files' ? '💾' : 
+                                      activeTab === 'contracts' ? '✍️' : 
+                                      activeTab === 'billing' ? '💳' : 
+                                      activeTab === 'messages' ? '💬' : 
+                                      activeTab === 'tickets' ? '🎟️' : 
+                                      activeTab === 'notifications' ? '🔔' : 
+                                      activeTab === 'team' ? '👥' : 
+                                      activeTab === 'settings' ? '⚙️' : 
+                                      activeTab === 'reviews' ? '⭐' : 
+                                      activeTab === 'referrals' ? '🤝' : ''"></span>
+                        <span x-text="activeTab === 'dashboard' ? 'Dashboard Overview' : 
+                                      activeTab === 'projects' ? 'My Projects' : 
+                                      activeTab === 'requests' ? 'Service Requests' : 
+                                      activeTab === 'milestones' ? 'Milestones & Approvals' : 
+                                      activeTab === 'files' ? 'Files & Deliverables' : 
+                                      activeTab === 'contracts' ? 'Digital Contracts' : 
+                                      activeTab === 'billing' ? 'Invoices & Payments' : 
+                                      activeTab === 'messages' ? 'Collaboration Hub' : 
+                                      activeTab === 'tickets' ? 'Support Helpdesk' : 
+                                      activeTab === 'notifications' ? 'Notifications' : 
+                                      activeTab === 'team' ? 'Team Access' : 
+                                      activeTab === 'settings' ? 'Settings & Security' : 
+                                      activeTab === 'reviews' ? 'Write a Review' : 
+                                      activeTab === 'referrals' ? 'Referral Program' : ''"></span>
+                    </span>
+                    <span class="text-[9px] text-brand-gray bg-brand-teal/10 px-2 py-0.5 rounded font-mono uppercase">Active</span>
+                </div>
+
+                <!-- Collapsible list of options -->
+                <div x-show="mobileOpen" x-transition class="space-y-1 pt-1 max-h-80 overflow-y-auto pr-1">
+                    <button @click="activeTab = 'dashboard'; mobileOpen = false;" :class="activeTab === 'dashboard' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>📊</span> Dashboard Overview
+                    </button>
+                    <button @click="activeTab = 'projects'; mobileOpen = false;" :class="activeTab === 'projects' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>📂</span> My Projects
+                    </button>
+                    <button @click="activeTab = 'requests'; mobileOpen = false;" :class="activeTab === 'requests' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🚀</span> Service Requests
+                    </button>
+                    <button @click="activeTab = 'milestones'; mobileOpen = false;" :class="activeTab === 'milestones' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🏆</span> Milestones &amp; Approvals
+                    </button>
+                    <button @click="activeTab = 'files'; mobileOpen = false;" :class="activeTab === 'files' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>💾</span> Files &amp; Deliverables
+                    </button>
+                    <button @click="activeTab = 'contracts'; mobileOpen = false;" :class="activeTab === 'contracts' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>✍️</span> Digital Contracts
+                    </button>
+                    <button @click="activeTab = 'billing'; mobileOpen = false;" :class="activeTab === 'billing' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>💳</span> Invoices &amp; Payments
+                    </button>
+                    <button @click="activeTab = 'messages'; mobileOpen = false;" :class="activeTab === 'messages' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>💬</span> Collaboration Hub
+                    </button>
+                    <button @click="activeTab = 'tickets'; mobileOpen = false;" :class="activeTab === 'tickets' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🎟️</span> Support Helpdesk
+                    </button>
+                    <button @click="activeTab = 'notifications'; mobileOpen = false;" :class="activeTab === 'notifications' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🔔</span> Notifications
+                    </button>
+                    <button @click="activeTab = 'team'; mobileOpen = false;" :class="activeTab === 'team' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>👥</span> Team Access
+                    </button>
+                    <button @click="activeTab = 'settings'; mobileOpen = false;" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>⚙️</span> Settings &amp; Security
+                    </button>
+                    <button @click="activeTab = 'reviews'; mobileOpen = false;" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>⭐</span> Write a Review
+                    </button>
+                    <button @click="activeTab = 'referrals'; mobileOpen = false;" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🤝</span> Referral Program
+                    </button>
+                </div>
             </div>
         </aside>
 

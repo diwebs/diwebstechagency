@@ -40,6 +40,10 @@
                            class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.projects') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
                             <span>📂</span> Projects Pipeline
                         </a>
+                        <a href="{{ route('admin.portfolios') }}" 
+                           class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.portfolios*') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
+                            <span>🖼️</span> Portfolio Showcase
+                        </a>
                         <a href="{{ route('admin.leads') }}" 
                            class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.leads') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
                             <span>💼</span> Clients &amp; Leads

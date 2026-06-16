@@ -4,8 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Diwebs Tech Agency - Digital Ecosystem')</title>
     
+    <!-- Dynamic SEO Management -->
+    <title>@yield('title', 'Diwebs Tech Agency - Digital Ecosystem'){{ \App\Helpers\SettingsHelper::get('seo_meta_title_suffix', ' | Diwebs Tech Agency') }}</title>
+    <meta name="description" content="@yield('meta_description', \App\Helpers\SettingsHelper::get('seo_meta_description', 'Diwebs Tech Agency is a world-class builder of enterprise software, LMS academy, mobile apps, and robust CBT infrastructures.'))">
+    <meta name="keywords" content="@yield('meta_keywords', \App\Helpers\SettingsHelper::get('seo_meta_keywords', 'agency, lms, cbt, software development, next.js, vue, laravel, enterprise solution, ai automation'))">
+    
+    <!-- Open Graph / OG Metadata -->
+    <meta property="og:title" content="@yield('title', 'Diwebs Tech Agency - Digital Ecosystem')">
+    <meta property="og:description" content="@yield('meta_description', \App\Helpers\SettingsHelper::get('seo_meta_description', 'Diwebs Tech Agency is a world-class builder of enterprise software, LMS academy, mobile apps, and robust CBT infrastructures.'))">
+    <meta property="og:image" content="@yield('meta_image', \App\Helpers\SettingsHelper::get('seo_og_image_url', 'https://diwebstechagency.website/images/brand/seo_card.jpg'))">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request()->url() }}">
+    <meta property="og:site_name" content="{{ \App\Helpers\SettingsHelper::get('app_name', 'Diwebs Tech Agency') }}">
+    
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('title', 'Diwebs Tech Agency - Digital Ecosystem')">
+    <meta name="twitter:description" content="@yield('meta_description', \App\Helpers\SettingsHelper::get('seo_meta_description', 'Diwebs Tech Agency is a world-class builder of enterprise software, LMS academy, mobile apps, and robust CBT infrastructures.'))">
+    <meta name="twitter:image" content="@yield('meta_image', \App\Helpers\SettingsHelper::get('seo_og_image_url', 'https://diwebstechagency.website/images/brand/seo_card.jpg'))">
+
     <!-- PWA Meta Elements -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,13 +31,24 @@
     <meta name="theme-color" content="#1E2125">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/icons/icon-512x512.svg">
-    <link rel="apple-touch-icon" href="/icons/icon-512x512.svg">
+    <link class="apple-touch-icon" rel="apple-touch-icon" href="/icons/icon-512x512.svg">
 
     <!-- Premium Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Google Analytics (gtag.js) Injection -->
+    @if(\App\Helpers\SettingsHelper::get('google_analytics_id'))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ \App\Helpers\SettingsHelper::get('google_analytics_id') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{ \App\Helpers\SettingsHelper::get('google_analytics_id') }}');
+        </script>
+    @endif
+
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -69,15 +98,18 @@
                 <div class="hidden md:flex items-center gap-4">
                     @auth
                         <div class="flex items-center gap-3">
-                            <span class="hidden sm:inline text-xs text-brand-gray">Logged as: <strong class="text-brand-white">{{ auth()->user()->name }}</strong> ({{ strtoupper(auth()->user()->role) }})</span>
+                            <a href="{{ route('profile.security') }}" 
+                               title="View Profile Settings ({{ auth()->user()->name }} - {{ strtoupper(auth()->user()->role) }})" 
+                               class="relative h-8 w-8 rounded-full border border-brand-teal/30 bg-brand-teal/10 hover:border-brand-cyan/60 hover:bg-brand-teal/20 flex items-center justify-center text-xs font-extrabold text-brand-cyan transition-all group overflow-hidden">
+                                <span>{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-brand-dark-secondary animate-pulse"></span>
+                            </a>
                             
                             @if(auth()->user()->role === 'super_admin')
                                 <a href="{{ route('admin.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Admin</a>
                             @elseif(auth()->user()->role === 'client')
                                 <a href="{{ route('portal.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Client Area</a>
                             @endif
-
-                            <a href="{{ route('profile.security') }}" class="text-xs font-medium text-brand-cyan hover:text-brand-white transition-colors">Security</a>
 
                             <form action="{{ route('logout') }}" method="POST" class="inline">
                                 @csrf
@@ -191,15 +223,28 @@
 
                         <div class="py-6 space-y-3">
                             @auth
-                                <div class="px-3 text-xs text-brand-gray mb-2">
-                                    Logged as: <strong class="text-brand-white">{{ auth()->user()->name }}</strong>
+                                <div class="px-3 py-3 mb-2 flex items-center gap-3 border-b border-brand-teal/10">
+                                    <a href="{{ route('profile.security') }}" 
+                                       @click="mobileMenuOpen = false"
+                                       title="View Profile Settings"
+                                       class="relative h-10 w-10 rounded-full border border-brand-teal/30 bg-brand-teal/10 hover:border-brand-cyan/60 hover:bg-brand-teal/20 flex items-center justify-center text-sm font-extrabold text-brand-cyan transition-all overflow-hidden flex-shrink-0">
+                                        <span>{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                        <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-brand-dark-secondary animate-pulse"></span>
+                                    </a>
+                                    <div class="flex flex-col min-w-0">
+                                        <a href="{{ route('profile.security') }}" @click="mobileMenuOpen = false" class="text-xs font-semibold text-brand-white hover:text-brand-cyan transition-colors truncate">
+                                            {{ auth()->user()->name }}
+                                        </a>
+                                        <span class="text-[10px] text-brand-gray uppercase tracking-wider">
+                                            {{ str_replace('_', ' ', auth()->user()->role) }}
+                                        </span>
+                                    </div>
                                 </div>
                                 @if(auth()->user()->role === 'super_admin')
                                     <a href="{{ route('admin.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Admin Dashboard</a>
                                 @elseif(auth()->user()->role === 'client')
                                     <a href="{{ route('portal.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Client Workspace</a>
                                 @endif
-                                <a href="{{ route('profile.security') }}" class="block rounded-lg text-center border border-brand-teal/20 py-2.5 text-sm font-semibold text-brand-white hover:bg-brand-teal/10" @click="mobileMenuOpen = false">Security Settings</a>
                                 <form action="{{ route('logout') }}" method="POST" class="block w-full">
                                     @csrf
                                     <button type="submit" class="w-full rounded-lg text-center bg-rose-500/10 border border-rose-500/20 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/25">Logout Session</button>
@@ -213,20 +258,8 @@
                 </div>
             </div>
 
-            <!-- Footer of Menu -->
-            @if(!file_exists(storage_path('installed')))
-            <div class="border-t border-brand-teal/10 pt-6">
-                <div class="flex flex-col gap-2">
-                    <span class="text-[10px] text-brand-gray uppercase tracking-wider font-semibold block text-center mb-1">Testing Quick Bypass</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <a href="{{ route('auth.dev-login', 'super_admin') }}" class="rounded bg-brand-dark-secondary border border-brand-teal/10 py-1.5 text-center text-[10px] text-brand-cyan" @click="mobileMenuOpen = false">Admin</a>
-                        <a href="{{ route('auth.dev-login', 'client') }}" class="rounded bg-brand-dark-secondary border border-brand-teal/10 py-1.5 text-center text-[10px] text-brand-cyan" @click="mobileMenuOpen = false">Client</a>
-                        <a href="{{ route('auth.dev-login', 'student') }}" class="rounded bg-brand-dark-secondary border border-brand-teal/10 py-1.5 text-center text-[10px] text-brand-cyan" @click="mobileMenuOpen = false">Student</a>
-                        <a href="{{ route('auth.dev-login', 'candidate') }}" class="rounded bg-brand-dark-secondary border border-brand-teal/10 py-1.5 text-center text-[10px] text-brand-cyan" @click="mobileMenuOpen = false">CBT</a>
-                    </div>
-                </div>
-            </div>
-            @endif
+
+
         </div>
     </div>
 

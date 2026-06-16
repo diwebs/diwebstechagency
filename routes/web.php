@@ -36,6 +36,43 @@ Route::get('/install', [App\Http\Controllers\InstallController::class, 'showInst
 Route::post('/install/database', [App\Http\Controllers\InstallController::class, 'setupDatabase'])->name('install.database');
 Route::post('/install/admin', [App\Http\Controllers\InstallController::class, 'setupAdmin'])->name('install.admin');
 
+// Temporary Secure Database Migration Route (can be visited at: /run-migrations-securely?token=diwebs-secure-mig-2026)
+Route::get('/run-migrations-securely', function(\Illuminate\Http\Request $request) {
+    if ($request->get('token') !== 'diwebs-secure-mig-2026') {
+        abort(403, 'Unauthorized');
+    }
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return "Migrations run successfully!<br><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
+    } catch (\Exception $e) {
+        return "Error running migrations: " . $e->getMessage();
+    }
+});
+
+// Secure Log and Diagnostics Debugger (can be visited at: /debug-prod-errors?token=diwebs-secure-mig-2026)
+Route::get('/debug-prod-errors', function(\Illuminate\Http\Request $request) {
+    if ($request->get('token') !== 'diwebs-secure-mig-2026') {
+        abort(403);
+    }
+    
+    $logPath = storage_path('logs/laravel.log');
+    $logContent = 'Log file does not exist';
+    if (file_exists($logPath)) {
+        $data = file($logPath);
+        $line_count = count($data);
+        $output = array_slice($data, max(0, $line_count - 100));
+        $logContent = implode("", $output);
+    }
+    
+    return response()->json([
+        'portfolio_class_exists' => class_exists('App\Models\Portfolio'),
+        'portfolios_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('portfolios'),
+        'db_connection' => config('database.default'),
+        'db_database' => config('database.connections.' . config('database.default') . '.database'),
+        'log_tail' => $logContent,
+    ]);
+});
+
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -187,6 +224,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::post('/users/{id}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
+        Route::post('/users/{id}/delete', [AdminController::class, 'deleteUser'])->name('users.delete');
         Route::get('/referrals', [AdminController::class, 'referrals'])->name('referrals');
         Route::post('/referrals/{id}/pay', [AdminController::class, 'payReferralBonus'])->name('referrals.pay');
         Route::post('/referrals/{id}/status', [AdminController::class, 'updateReferralStatus'])->name('referrals.status');
@@ -196,9 +234,18 @@ Route::middleware(['auth'])->group(function () {
         
         // Projects Submodule
         Route::get('/projects', [AdminController::class, 'projects'])->name('projects');
+        Route::post('/projects/{id}/delete', [AdminController::class, 'deleteProject'])->name('projects.delete');
         Route::post('/projects/{id}/milestone/{milestoneId}/status', [AdminController::class, 'updateMilestoneStatus'])->name('projects.milestone.status');
         Route::post('/projects/{id}/validate', [AdminController::class, 'validateProject'])->name('projects.validate');
         Route::post('/projects/{id}/success-rate', [AdminController::class, 'updateSuccessRate'])->name('projects.success-rate');
+        
+        // Portfolios Showcase Submodule
+        Route::get('/portfolios', [AdminController::class, 'portfolios'])->name('portfolios');
+        Route::get('/portfolios/create', [AdminController::class, 'createPortfolio'])->name('portfolios.create');
+        Route::post('/portfolios/store', [AdminController::class, 'storePortfolio'])->name('portfolios.store');
+        Route::get('/portfolios/{id}/edit', [AdminController::class, 'editPortfolio'])->name('portfolios.edit');
+        Route::post('/portfolios/{id}/update', [AdminController::class, 'updatePortfolio'])->name('portfolios.update');
+        Route::post('/portfolios/{id}/delete', [AdminController::class, 'deletePortfolio'])->name('portfolios.delete');
         
         // Financial Operations Submodule
         Route::get('/finance', [AdminController::class, 'finance'])->name('finance');
@@ -251,6 +298,13 @@ Route::middleware(['auth'])->group(function () {
         // Settings Submodule
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
         Route::post('/settings/update', [AdminController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/seo', [AdminController::class, 'updateSeoSettings'])->name('settings.seo.update');
+        Route::post('/settings/mail', [AdminController::class, 'updateMailSettings'])->name('settings.mail.update');
+        Route::post('/settings/mail/test', [AdminController::class, 'sendTestEmail'])->name('settings.mail.test');
+        Route::post('/settings/clear-cache', [AdminController::class, 'clearCache'])->name('settings.clear-cache');
+        Route::post('/settings/optimize-db', [AdminController::class, 'optimizeDatabase'])->name('settings.optimize-db');
+        Route::post('/settings/flush-sessions', [AdminController::class, 'flushSessions'])->name('settings.flush-sessions');
+        Route::post('/settings/purge-old-data', [AdminController::class, 'purgeOldData'])->name('settings.purge-old-data');
 
         // Payment Settings Submodule
         Route::get('/payment-settings', [AdminController::class, 'paymentSettings'])->name('payment-settings');

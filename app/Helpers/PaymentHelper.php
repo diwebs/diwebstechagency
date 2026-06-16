@@ -13,23 +13,23 @@ class PaymentHelper
      */
     public static function format($amount, $decimals = 2)
     {
-        $symbol = cache('payment_currency_symbol', '$');
-        $position = cache('payment_currency_position', 'before');
+        $symbol = SettingsHelper::get('payment_currency_symbol', '$');
+        $position = SettingsHelper::get('payment_currency_position', 'before');
         
         if (auth()->check()) {
             $user = auth()->user();
             $country = strtolower(trim($user->country ?? ''));
             if ($country === 'nigeria') {
                 $symbol = '₦';
-                $rate = (float)cache('currency_exchange_rate_ngn', 1500.00);
+                $rate = (float)SettingsHelper::get('currency_exchange_rate_ngn', 1500.00);
                 $amount = $amount * $rate;
             } elseif (in_array($country, ['united kingdom', 'uk', 'gb', 'great britain'])) {
                 $symbol = '£';
-                $rate = (float)cache('currency_exchange_rate_gbp', 0.80);
+                $rate = (float)SettingsHelper::get('currency_exchange_rate_gbp', 0.80);
                 $amount = $amount * $rate;
             } elseif (in_array($country, ['europe', 'germany', 'france', 'italy', 'spain', 'netherlands', 'belgium', 'ireland'])) {
                 $symbol = '€';
-                $rate = (float)cache('currency_exchange_rate_eur', 0.92);
+                $rate = (float)SettingsHelper::get('currency_exchange_rate_eur', 0.92);
                 $amount = $amount * $rate;
             }
         }
@@ -46,7 +46,7 @@ class PaymentHelper
      */
     public static function activeGateway()
     {
-        return cache('payment_active_gateway', 'stripe');
+        return SettingsHelper::get('payment_active_gateway', 'stripe');
     }
 
     /**
@@ -57,12 +57,12 @@ class PaymentHelper
     public static function bankDetails()
     {
         return [
-            'name'           => cache('payment_bank_name', 'Zenith Bank PLC'),
-            'account_name'   => cache('payment_bank_account_name', 'Diwebs Tech Agency Ltd'),
-            'account_number' => cache('payment_bank_account_number', '1017384950'),
-            'routing_number' => cache('payment_bank_routing_number', '057150013'),
-            'swift_code'     => cache('payment_bank_swift_code', 'ZENINILAGXX'),
-            'enabled'        => cache('payment_bank_enabled', false),
+            'name'           => SettingsHelper::get('payment_bank_name', 'Zenith Bank PLC'),
+            'account_name'   => SettingsHelper::get('payment_bank_account_name', 'Diwebs Tech Agency Ltd'),
+            'account_number' => SettingsHelper::get('payment_bank_account_number', '1017384950'),
+            'routing_number' => SettingsHelper::get('payment_bank_routing_number', '057150013'),
+            'swift_code'     => SettingsHelper::get('payment_bank_swift_code', 'ZENINILAGXX'),
+            'enabled'        => SettingsHelper::get('payment_bank_enabled', false),
         ];
     }
 
@@ -74,9 +74,9 @@ class PaymentHelper
     public static function cryptoDetails()
     {
         return [
-            'btc'     => cache('payment_crypto_wallet_btc', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'),
-            'usdt'    => cache('payment_crypto_wallet_usdt', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'),
-            'enabled' => cache('payment_crypto_enabled', false),
+            'btc'     => SettingsHelper::get('payment_crypto_wallet_btc', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'),
+            'usdt'    => SettingsHelper::get('payment_crypto_wallet_usdt', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'),
+            'enabled' => SettingsHelper::get('payment_crypto_enabled', false),
         ];
     }
 }

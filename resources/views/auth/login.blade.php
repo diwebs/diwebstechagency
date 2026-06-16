@@ -85,16 +85,6 @@
         <!-- Alert message display -->
         <div x-show="errorMessage" class="relative z-10 mt-4 p-3 rounded bg-rose-950/40 border border-rose-500/30 text-xs text-rose-400 text-center" x-text="errorMessage"></div>
 
-        <!-- Sandbox logins -->
-        <div class="relative z-10 mt-8 border-t border-brand-teal/10 pt-6">
-            <h4 class="text-xs font-semibold text-brand-white uppercase text-center mb-4">Dev Testing Sandbox</h4>
-            <div class="grid grid-cols-2 gap-2">
-                <a href="{{ route('auth.dev-login', 'super_admin') }}" class="rounded-md bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 py-2 text-center text-xs text-brand-cyan transition-all">Admin Panel</a>
-                <a href="{{ route('auth.dev-login', 'client') }}" class="rounded-md bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 py-2 text-center text-xs text-brand-cyan transition-all">Client Portal</a>
-                <a href="{{ route('auth.dev-login', 'student') }}" class="rounded-md bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 py-2 text-center text-xs text-brand-cyan transition-all">Academy LMS</a>
-                <a href="{{ route('auth.dev-login', 'candidate') }}" class="rounded-md bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 py-2 text-center text-xs text-brand-cyan transition-all">CBT Engine</a>
-            </div>
-        </div>
     </div>
 </div>
 

@@ -31,6 +31,12 @@
                             @endif">
                             {{ strtoupper($project->status) }}
                         </span>
+                        <form action="{{ route('admin.projects.delete', $project->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete project: &quot;{{ $project->title }}&quot;? This will remove all milestones and cannot be undone.')">
+                            @csrf
+                            <button type="submit" class="rounded px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer bg-red-950 text-red-400 border border-red-500/20 hover:bg-red-900/35 transition-all">
+                                Delete
+                            </button>
+                        </form>
                     </div>
                 </div>
 

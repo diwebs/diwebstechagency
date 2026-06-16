@@ -12,13 +12,19 @@ use App\Models\CbtCenter;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\Milestone;
+use App\Models\Contract;
 use App\Models\Ticket;
 use App\Models\NewsArticle;
 use App\Models\CbtCenterEnrollment;
 use App\Models\CbtLiveExam;
 use App\Models\Exam;
+use App\Models\Portfolio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -55,6 +61,24 @@ class AdminController extends Controller
         return back()->with('success', 'User status updated to ' . $newStatus . '.');
     }
 
+    public function deleteUser($id)
+    {
+        if (auth()->id() == $id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        $user = User::findOrFail($id);
+
+        try {
+            DB::transaction(function () use ($user) {
+                $user->delete();
+            });
+            return back()->with('success', 'User ' . $user->name . ' deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete user: ' . $e->getMessage());
+        }
+    }
+
     public function exams()
     {
         $sessions = ExamSession::with(['user', 'exam', 'center'])->orderBy('created_at', 'desc')->paginate(15);
@@ -73,11 +97,105 @@ class AdminController extends Controller
         return view('admin.security-logs', compact('logs'));
     }
 
-    // Projects Submodule
     public function projects()
     {
         $projects = Project::with(['client', 'milestones'])->orderBy('created_at', 'desc')->paginate(10);
         return view('admin.projects', compact('projects'));
+    }
+
+    public function deleteProject($id)
+    {
+        $project = Project::findOrFail($id);
+
+        try {
+            DB::transaction(function () use ($project) {
+                $project->delete();
+            });
+            return back()->with('success', 'Project ' . $project->title . ' deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete project: ' . $e->getMessage());
+        }
+    }
+
+    // Portfolios Submodule
+    public function portfolios()
+    {
+        $portfolios = Portfolio::orderBy('order', 'asc')->orderBy('created_at', 'desc')->paginate(10);
+        return view('admin.portfolio-index', compact('portfolios'));
+    }
+
+    public function createPortfolio()
+    {
+        return view('admin.portfolio-edit');
+    }
+
+    public function storePortfolio(Request $request)
+    {
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string',
+            'mock_image'  => 'nullable|image|max:5120', // max 5MB image
+            'project_url' => 'nullable|url|max:255',
+            'order'       => 'nullable|integer',
+        ]);
+
+        if ($request->hasFile('mock_image')) {
+            $path = $request->file('mock_image')->store('portfolios', 'public');
+            $validated['mock_image'] = $path;
+        }
+
+        $validated['order'] = $validated['order'] ?? 0;
+
+        Portfolio::create($validated);
+
+        return redirect()->route('admin.portfolios')->with('success', 'Portfolio project created successfully.');
+    }
+
+    public function editPortfolio($id)
+    {
+        $portfolio = Portfolio::findOrFail($id);
+        return view('admin.portfolio-edit', compact('portfolio'));
+    }
+
+    public function updatePortfolio(Request $request, $id)
+    {
+        $portfolio = Portfolio::findOrFail($id);
+
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string',
+            'mock_image'  => 'nullable|image|max:5120', // max 5MB image
+            'project_url' => 'nullable|url|max:255',
+            'order'       => 'nullable|integer',
+        ]);
+
+        if ($request->hasFile('mock_image')) {
+            // Delete old mock image if it exists
+            if ($portfolio->mock_image) {
+                Storage::disk('public')->delete($portfolio->mock_image);
+            }
+            $path = $request->file('mock_image')->store('portfolios', 'public');
+            $validated['mock_image'] = $path;
+        }
+
+        $validated['order'] = $validated['order'] ?? 0;
+
+        $portfolio->update($validated);
+
+        return redirect()->route('admin.portfolios')->with('success', 'Portfolio project updated successfully.');
+    }
+
+    public function deletePortfolio($id)
+    {
+        $portfolio = Portfolio::findOrFail($id);
+
+        if ($portfolio->mock_image) {
+            Storage::disk('public')->delete($portfolio->mock_image);
+        }
+
+        $portfolio->delete();
+
+        return redirect()->route('admin.portfolios')->with('success', 'Portfolio project deleted successfully.');
     }
 
     public function updateMilestoneStatus(Request $request, $id, $milestoneId)
@@ -393,11 +511,28 @@ class AdminController extends Controller
     public function settings()
     {
         $settings = [
-            'app_name' => cache('app_name', 'Diwebs Tech Agency'),
-            'maintenance_mode' => cache('maintenance_mode', false),
-            'allow_registration' => cache('allow_registration', true),
-            'auto_backups' => cache('auto_backups', true),
-            'referral_bonus_amount' => cache('referral_bonus_amount', 50.00)
+            'app_name' => \App\Helpers\SettingsHelper::get('app_name', 'Diwebs Tech Agency'),
+            'maintenance_mode' => \App\Helpers\SettingsHelper::get('maintenance_mode', false),
+            'allow_registration' => \App\Helpers\SettingsHelper::get('allow_registration', true),
+            'auto_backups' => \App\Helpers\SettingsHelper::get('auto_backups', true),
+            'referral_bonus_amount' => \App\Helpers\SettingsHelper::get('referral_bonus_amount', 50.00),
+
+            // Analytics & SEO Settings
+            'google_analytics_id' => \App\Helpers\SettingsHelper::get('google_analytics_id', ''),
+            'seo_meta_title_suffix' => \App\Helpers\SettingsHelper::get('seo_meta_title_suffix', ' | Diwebs Tech Agency'),
+            'seo_meta_description' => \App\Helpers\SettingsHelper::get('seo_meta_description', 'Diwebs Tech Agency is a world-class builder of enterprise software, LMS academy, mobile apps, and robust CBT infrastructures.'),
+            'seo_meta_keywords' => \App\Helpers\SettingsHelper::get('seo_meta_keywords', 'agency, lms, cbt, software development, next.js, vue, laravel, enterprise solution, ai automation'),
+            'seo_og_image_url' => \App\Helpers\SettingsHelper::get('seo_og_image_url', 'https://diwebstechagency.website/images/brand/seo_card.jpg'),
+
+            // Dynamic Mail Settings
+            'mail_mailer' => \App\Helpers\SettingsHelper::get('mail_mailer', 'log'),
+            'mail_host' => \App\Helpers\SettingsHelper::get('mail_host', 'mail.diwebstechagency.website'),
+            'mail_port' => \App\Helpers\SettingsHelper::get('mail_port', '465'),
+            'mail_username' => \App\Helpers\SettingsHelper::get('mail_username', 'noreply@diwebstechagency.website'),
+            'mail_password' => \App\Helpers\SettingsHelper::get('mail_password', ''),
+            'mail_scheme' => \App\Helpers\SettingsHelper::get('mail_scheme', 'ssl'),
+            'mail_from_address' => \App\Helpers\SettingsHelper::get('mail_from_address', 'noreply@diwebstechagency.website'),
+            'mail_from_name' => \App\Helpers\SettingsHelper::get('mail_from_name', 'Diwebs Tech Agency'),
         ];
         return view('admin.settings', compact('settings'));
     }
@@ -409,12 +544,85 @@ class AdminController extends Controller
             'referral_bonus_amount' => 'required|numeric|min:0'
         ]);
 
-        cache(['app_name' => $request->app_name]);
-        cache(['maintenance_mode' => $request->has('maintenance_mode')]);
-        cache(['allow_registration' => $request->has('allow_registration')]);
-        cache(['auto_backups' => $request->has('auto_backups')]);
-        cache(['referral_bonus_amount' => (float)$request->referral_bonus_amount]);
+        \App\Helpers\SettingsHelper::set('app_name', $request->app_name);
+        \App\Helpers\SettingsHelper::set('maintenance_mode', $request->has('maintenance_mode'));
+        \App\Helpers\SettingsHelper::set('allow_registration', $request->has('allow_registration'));
+        \App\Helpers\SettingsHelper::set('auto_backups', $request->has('auto_backups'));
+        \App\Helpers\SettingsHelper::set('referral_bonus_amount', (float)$request->referral_bonus_amount);
         return back()->with('success', 'System branding settings updated successfully.');
+    }
+
+    public function updateSeoSettings(Request $request)
+    {
+        $request->validate([
+            'google_analytics_id' => 'nullable|string|max:50',
+            'seo_meta_title_suffix' => 'required|string|max:255',
+            'seo_meta_description' => 'required|string',
+            'seo_meta_keywords' => 'required|string',
+            'seo_og_image_url' => 'nullable|url'
+        ]);
+
+        \App\Helpers\SettingsHelper::set('google_analytics_id', $request->google_analytics_id);
+        \App\Helpers\SettingsHelper::set('seo_meta_title_suffix', $request->seo_meta_title_suffix);
+        \App\Helpers\SettingsHelper::set('seo_meta_description', $request->seo_meta_description);
+        \App\Helpers\SettingsHelper::set('seo_meta_keywords', $request->seo_meta_keywords);
+        \App\Helpers\SettingsHelper::set('seo_og_image_url', $request->seo_og_image_url);
+
+        return back()->with('success', 'Google Analytics and Global SEO settings updated successfully.');
+    }
+
+    public function updateMailSettings(Request $request)
+    {
+        $request->validate([
+            'mail_mailer' => 'required|string|in:smtp,log,sendmail,array',
+            'mail_host' => 'nullable|string|max:255',
+            'mail_port' => 'nullable|integer|min:1|max:65535',
+            'mail_username' => 'nullable|string|max:255',
+            'mail_password' => 'nullable|string',
+            'mail_scheme' => 'nullable|string|in:ssl,tls,null',
+            'mail_from_address' => 'required|email|max:255',
+            'mail_from_name' => 'required|string|max:255',
+        ]);
+
+        \App\Helpers\SettingsHelper::set('mail_mailer', $request->mail_mailer);
+        \App\Helpers\SettingsHelper::set('mail_host', $request->mail_host);
+        \App\Helpers\SettingsHelper::set('mail_port', $request->mail_port);
+        \App\Helpers\SettingsHelper::set('mail_username', $request->mail_username);
+        
+        if ($request->filled('mail_password')) {
+            \App\Helpers\SettingsHelper::set('mail_password', $request->mail_password);
+        }
+        
+        \App\Helpers\SettingsHelper::set('mail_scheme', $request->mail_scheme === 'null' ? null : $request->mail_scheme);
+        \App\Helpers\SettingsHelper::set('mail_from_address', $request->mail_from_address);
+        \App\Helpers\SettingsHelper::set('mail_from_name', $request->mail_from_name);
+
+        Artisan::call('config:clear');
+
+        return back()->with('success', 'Dynamic Mail & SMTP configurations updated successfully.');
+    }
+
+    public function sendTestEmail(Request $request)
+    {
+        $request->validate([
+            'test_email' => 'required|email'
+        ]);
+
+        try {
+            $toEmail = $request->test_email;
+            
+            \Illuminate\Support\Facades\Mail::html(
+                "<h3>SMTP Test Verification</h3><p>This is a test email sent from the <strong>Diwebs Tech Agency</strong> Admin Settings panel.</p><p>If you received this message, your custom dynamic SMTP configurations are working perfectly!</p><p>Timestamp: " . now()->toDateTimeString() . "</p>",
+                function ($message) use ($toEmail) {
+                    $message->to($toEmail)
+                            ->subject('Diwebs SMTP Verification Test');
+                }
+            );
+
+            return back()->with('success', '✅ Test email sent successfully to ' . $toEmail . '. Check your inbox or system logs.');
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ Test email delivery failed: ' . $e->getMessage());
+        }
     }
 
     // Payment Settings Submodule
@@ -953,6 +1161,135 @@ class AdminController extends Controller
         $referral->update($updateData);
 
         return back()->with('success', 'Referral status updated to ' . $request->status . '.');
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // MAINTENANCE ACTIONS
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Clear application cache, config cache, route cache & view cache.
+     */
+    public function clearCache()
+    {
+        try {
+            Artisan::call('cache:clear');
+            Artisan::call('config:clear');
+            Artisan::call('route:clear');
+            Artisan::call('view:clear');
+            return back()->with('success', '✅ All caches cleared successfully (application, config, route & view cache).');
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ Cache clear failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Optimize database tables (MySQL OPTIMIZE TABLE on all tables).
+     */
+    public function optimizeDatabase()
+    {
+        try {
+            $driver = DB::connection()->getDriverName();
+            $count  = 0;
+
+            if ($driver === 'sqlite') {
+                // In SQLite, VACUUM is the database optimization and file defragmentation command
+                DB::statement('VACUUM');
+                
+                // Fetch user tables to count them for the user message
+                $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+                $count = count($tables);
+            } else {
+                // Default to MySQL table optimizations
+                $tables = DB::select('SHOW TABLES');
+                $dbName = DB::getDatabaseName();
+                $key    = 'Tables_in_' . $dbName;
+                foreach ($tables as $table) {
+                    $tableName = $table->$key;
+                    DB::statement("OPTIMIZE TABLE `{$tableName}`");
+                    $count++;
+                }
+            }
+
+            // Also regenerate autoloads
+            Artisan::call('config:cache');
+            return back()->with('success', "✅ Database optimized successfully ({$count} tables processed and autoload cache rebuilt).");
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ Database optimization failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Flush all active user sessions (forces everyone to re-login).
+     */
+    public function flushSessions()
+    {
+        try {
+            // Flush the session table if using database driver
+            if (config('session.driver') === 'database') {
+                DB::table(config('session.table', 'sessions'))->truncate();
+            } else {
+                // File-based sessions
+                $sessionPath = config('session.files', storage_path('framework/sessions'));
+                if (File::isDirectory($sessionPath)) {
+                    foreach (File::files($sessionPath) as $file) {
+                        File::delete($file);
+                    }
+                }
+            }
+            // Also clear the trusted devices table so 2FA re-triggers
+            DB::table('user_devices')->truncate();
+            return back()->with('success', '✅ All active sessions flushed. All users have been logged out and device records cleared.');
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ Session flush failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Full site data purge — clears expired OTPs, old audit logs,
+     * stale device records, ended/flagged exam sessions older than 90 days,
+     * read notifications older than 30 days, and all caches.
+     */
+    public function purgeOldData()
+    {
+        try {
+            $report = [];
+
+            // 1. Expired OTP codes
+            $otps = DB::table('otp_codes')->where('expires_at', '<', now())->delete();
+            $report[] = "{$otps} expired OTP code(s) removed";
+
+            // 2. Old audit logs (> 90 days)
+            $logs = DB::table('audit_logs')->where('created_at', '<', now()->subDays(90))->delete();
+            $report[] = "{$logs} audit log entry/entries older than 90 days removed";
+
+            // 3. Stale trusted device records not seen in 60 days
+            $devices = DB::table('user_devices')->where('last_active_at', '<', now()->subDays(60))->delete();
+            $report[] = "{$devices} stale device record(s) removed";
+
+            // 4. Old ended/flagged exam sessions (> 90 days)
+            $sessions = ExamSession::whereIn('status', ['completed', 'flagged', 'terminated'])
+                ->where('created_at', '<', now()->subDays(90))
+                ->delete();
+            $report[] = "{$sessions} old exam session(s) purged";
+
+            // 5. Read admin notifications older than 30 days
+            $notifs = DB::table('admin_notifications')
+                ->where('is_read', true)
+                ->where('created_at', '<', now()->subDays(30))
+                ->delete();
+            $report[] = "{$notifs} read notification(s) removed";
+
+            // 6. Full cache flush
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            $report[] = 'Application & view cache flushed';
+
+            $summary = implode(', ', $report);
+            return back()->with('success', "✅ Site cleaned successfully! {$summary}.");
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ Purge failed: ' . $e->getMessage());
+        }
     }
 }
 

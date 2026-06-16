@@ -55,7 +55,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-brand-gray">{{ $user->created_at->format('M d, Y') }}</td>
-                            <td class="px-6 py-4 text-right">
+                             <td class="px-6 py-4 text-right">
                                 <form action="{{ route('admin.users.toggle', $user->id) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" 
@@ -66,6 +66,15 @@
                                         {{ $user->status === 'active' ? 'Suspend' : 'Reactivate' }}
                                     </button>
                                 </form>
+                                @if(auth()->id() !== $user->id)
+                                    <form action="{{ route('admin.users.delete', $user->id) }}" method="POST" class="inline ml-1.5" onsubmit="return confirm('Are you sure you want to delete user &quot;{{ $user->name }}&quot;? This will permanently delete all associated data and cannot be undone.')">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="rounded px-3 py-1.5 text-[10px] font-bold uppercase transition-all cursor-pointer bg-red-950 text-red-400 border border-red-500/20 hover:bg-red-900/35">
+                                            Delete
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

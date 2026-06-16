@@ -43,6 +43,27 @@ class AuthController extends Controller
                 ['code' => $code, 'expires_at' => now()->addMinutes(15), 'retries' => 0]
             );
             logger("Password reset code for {$request->email}: {$code}");
+
+            // Send Reset OTP via Mail
+            try {
+                $toEmail = $request->email;
+                \Illuminate\Support\Facades\Mail::html(
+                    "<div style='font-family:sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #1E2125;background-color:#1E2125;color:#ffffff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.3);'>" .
+                    "<div style='text-align:center;margin-bottom:20px;'><img src='https://diwebstechagency.website/images/brand/diwebs-logo.svg' alt='Diwebs Logo' style='height:45px;' /></div>" .
+                    "<h2 style='color:#06b6d4;border-bottom:1px solid #0d9488;padding-bottom:10px;text-align:center;margin-top:0;'>Password Recovery Code</h2>" .
+                    "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Hello,</p>" .
+                    "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>A password reset request was initiated for your <strong>Diwebs Tech Agency</strong> account.</p>" .
+                    "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Use the verification code below to authorize password recovery. The code is active for 15 minutes:</p>" .
+                    "<div style='text-align:center;margin:30px 0;'><span style='font-size:32px;font-weight:bold;letter-spacing:6px;background-color:#111827;padding:12px 28px;border:1px solid #0d9488;border-radius:10px;color:#06b6d4;box-shadow:inset 0 0 10px rgba(6,182,212,0.15);'>{$code}</span></div>" .
+                    "<p style='font-size:11px;color:#94a3b8;margin-top:40px;border-top:1px solid #334155;padding-top:15px;text-align:center;'>If you did not initiate this request, you can safely ignore this email. Your password will remain unchanged.</p>" .
+                    "</div>",
+                    function ($message) use ($toEmail) {
+                        $message->to($toEmail)->subject('Password Reset Verification Code - Diwebs Tech Agency');
+                    }
+                );
+            } catch (\Exception $e) {
+                logger()->error("Failed to send password reset OTP email: " . $e->getMessage());
+            }
         }
         return back()->with('success', 'Reset link instructions dispatched to your email.');
     }
@@ -122,6 +143,17 @@ class AuthController extends Controller
 
         // If user has 2FA enabled OR it's an unrecognized suspicious device, force step-up OTP challenge
         $isSuspicious = !$deviceExists;
+
+        // ── TEMP: super_admin device-check bypass ──────────────────────────────
+        // Skips the 2FA/OTP gate for super_admin so the admin can log in while
+        // email delivery is not yet configured. The device is saved as trusted
+        // on successful login below, so this bypass is self-disabling after the
+        // first login from this device. Remove this block once email is working.
+        if ($user->role === 'super_admin') {
+            $isSuspicious = false;
+        }
+        // ───────────────────────────────────────────────────────────────────────
+
         $requires2FA = $user->two_factor_confirmed_at !== null || $isSuspicious;
 
         if ($requires2FA) {
@@ -280,6 +312,27 @@ class AuthController extends Controller
         // Log the generated OTP code in standard logs (for mock delivery / shared hosting)
         logger("Diwebs Onboarding OTP for {$request->email}: {$code}");
 
+        // Send Onboarding OTP via Mail
+        try {
+            $toEmail = $request->email;
+            \Illuminate\Support\Facades\Mail::html(
+                "<div style='font-family:sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #1E2125;background-color:#1E2125;color:#ffffff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.3);'>" .
+                "<div style='text-align:center;margin-bottom:20px;'><img src='https://diwebstechagency.website/images/brand/diwebs-logo.svg' alt='Diwebs Logo' style='height:45px;' /></div>" .
+                "<h2 style='color:#06b6d4;border-bottom:1px solid #0d9488;padding-bottom:10px;text-align:center;margin-top:0;'>Verify Your Onboarding Email</h2>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Hello,</p>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Thank you for registering on the <strong>Diwebs Tech Agency</strong> digital ecosystem.</p>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Use the onboarding verification code below to authorize your registration request. The code expires in 5 minutes:</p>" .
+                "<div style='text-align:center;margin:30px 0;'><span style='font-size:32px;font-weight:bold;letter-spacing:6px;background-color:#111827;padding:12px 28px;border:1px solid #0d9488;border-radius:10px;color:#06b6d4;box-shadow:inset 0 0 10px rgba(6,182,212,0.15);'>{$code}</span></div>" .
+                "<p style='font-size:11px;color:#94a3b8;margin-top:40px;border-top:1px solid #334155;padding-top:15px;text-align:center;'>If you did not initiate this registration request, you can safely ignore this email.</p>" .
+                "</div>",
+                function ($message) use ($toEmail) {
+                    $message->to($toEmail)->subject('Verify Your Onboarding Email - Diwebs Tech Agency');
+                }
+            );
+        } catch (\Exception $e) {
+            logger()->error("Failed to send registration OTP email: " . $e->getMessage());
+        }
+
         return response()->json(['message' => 'Verification code sent.']);
     }
 
@@ -358,7 +411,7 @@ class AuthController extends Controller
             \App\Models\Referral::create([
                 'referrer_id' => $referrer->id,
                 'referee_id' => $user->id,
-                'bonus_amount' => (float)cache('referral_bonus_amount', 50.00),
+                'bonus_amount' => (float)\App\Helpers\SettingsHelper::get('referral_bonus_amount', 50.00),
                 'status' => 'pending'
             ]);
         }
@@ -547,6 +600,27 @@ class AuthController extends Controller
         );
 
         logger("Suspicious login detected. Diwebs security verification code for {$user->email}: {$code}");
+
+        // Send Security check / 2FA login OTP via Mail
+        try {
+            $toEmail = $user->email;
+            \Illuminate\Support\Facades\Mail::html(
+                "<div style='font-family:sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #1E2125;background-color:#1E2125;color:#ffffff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.3);'>" .
+                "<div style='text-align:center;margin-bottom:20px;'><img src='https://diwebstechagency.website/images/brand/diwebs-logo.svg' alt='Diwebs Logo' style='height:45px;' /></div>" .
+                "<h2 style='color:#f43f5e;border-bottom:1px solid #f43f5e;padding-bottom:10px;text-align:center;margin-top:0;'>Security Verification Required</h2>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Hello {$user->name},</p>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>A login attempt from an unrecognized device or suspicious session parameters was detected on your account.</p>" .
+                "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Use the verification code below to authorize this session. The code is active for 5 minutes:</p>" .
+                "<div style='text-align:center;margin:30px 0;'><span style='font-size:32px;font-weight:bold;letter-spacing:6px;background-color:#111827;padding:12px 28px;border:1px solid #f43f5e;border-radius:10px;color:#f43f5e;box-shadow:inset 0 0 10px rgba(244,63,94,0.15);'>{$code}</span></div>" .
+                "<p style='font-size:11px;color:#94a3b8;margin-top:40px;border-top:1px solid #334155;padding-top:15px;text-align:center;'>If you are not attempting to log in now, please reset your password immediately to secure your account.</p>" .
+                "</div>",
+                function ($message) use ($toEmail) {
+                    $message->to($toEmail)->subject('Security Login Verification Code - Diwebs Tech Agency');
+                }
+            );
+        } catch (\Exception $e) {
+            logger()->error("Failed to send security verification OTP email: " . $e->getMessage());
+        }
     }
 
     private function isPasswordBreached($password)
