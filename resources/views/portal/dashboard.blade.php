@@ -36,7 +36,7 @@
             // Read hash parameters to binding tab switching
             if (window.location.hash) {
                 const tab = window.location.hash.substring(1);
-                if (['dashboard', 'projects', 'requests', 'milestones', 'files', 'contracts', 'billing', 'messages', 'tickets', 'notifications', 'team', 'settings'].includes(tab)) {
+                if (['dashboard', 'projects', 'requests', 'milestones', 'files', 'contracts', 'billing', 'messages', 'tickets', 'notifications', 'team', 'settings', 'reviews', 'referrals'].includes(tab)) {
                     this.activeTab = tab;
                 }
             }
@@ -179,6 +179,12 @@
                     </button>
                     <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>⚙️</span> Settings &amp; Security
+                    </button>
+                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>⭐</span> Write a Review
+                    </button>
+                    <button @click="activeTab = 'referrals'" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🤝</span> Referral Program
                     </button>
                 </nav>
             </div>
@@ -1242,6 +1248,188 @@
                                     @endif
                                 </div>
                             @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════
+                 TAB: CLIENT REVIEW & RATING
+                 ════════════════════════════════════════ -->
+            <div x-show="activeTab === 'reviews'" class="space-y-6" style="display: none;">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden border border-brand-teal/15">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl"></div>
+                    <h2 class="text-xl font-bold text-brand-white">Client Reviews &amp; Trust Ratings</h2>
+                    <p class="text-xs text-brand-gray mt-1 leading-relaxed">Share your experience working with Diwebs Tech. Your review and trust rating will be displayed directly on our homepage.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Write a Review Form -->
+                    <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-brand-teal/25 space-y-4">
+                        <h3 class="text-sm font-bold text-brand-white">Write a Review</h3>
+                        
+                        <form action="{{ route('portal.review.store') }}" method="POST" class="space-y-4">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Company / Organization</label>
+                                    <input type="text" name="company_name" placeholder="e.g. E-Gov Group Ltd (Optional)" value="{{ cache('client_company_' . auth()->id()) }}" class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D]/60 px-4 py-3 text-xs text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Trust Rating</label>
+                                    <div class="flex items-center gap-1.5 py-2" x-data="{ currentRating: 5 }">
+                                        <input type="hidden" name="rating" :value="currentRating">
+                                        <template x-for="i in 5">
+                                            <button type="button" @click="currentRating = i" class="text-2xl transition-transform hover:scale-110 focus:outline-none">
+                                                <span :class="i <= currentRating ? 'text-brand-cyan' : 'text-brand-gray/30'">★</span>
+                                            </button>
+                                        </template>
+                                        <span class="text-xs text-brand-gray ml-2 font-semibold font-mono" x-text="currentRating + ' / 5 Stars'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Your Review &amp; Comments</label>
+                                <textarea name="comment" required rows="5" placeholder="Share your experience working with Diwebs Tech. Highlight our deliverables, communication, and software engineering capabilities..." class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D]/60 px-4 py-3 text-xs text-brand-white placeholder-brand-gray/30 focus:border-brand-cyan focus:outline-none transition-all"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary font-bold text-xs py-3.5 hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                ⭐ Submit Public Review
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Submitted Reviews Log -->
+                    <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-4">
+                        <h3 class="text-sm font-bold text-brand-white">My Reviews</h3>
+                        <div class="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                            @forelse($reviews as $rev)
+                                <div class="border-b border-brand-teal/5 pb-4 last:border-0 last:pb-0 space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-[10px] text-brand-cyan font-bold block">{{ $rev->company_name ?? 'Individual Client' }}</span>
+                                            <div class="flex text-xs text-brand-cyan mt-0.5">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <span>{{ $i <= $rev->rating ? '★' : '☆' }}</span>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                        <span class="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] text-emerald-400 font-bold uppercase">{{ $rev->status }}</span>
+                                    </div>
+                                    <p class="text-[10px] text-brand-gray leading-relaxed font-light italic">"{{ $rev->comment }}"</p>
+                                    <span class="text-[8px] text-brand-gray block">{{ $rev->created_at->format('M d, Y') }}</span>
+                                </div>
+                            @empty
+                                <p class="text-xs text-brand-gray text-center py-4">No reviews submitted yet.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════
+                 TAB: CLIENT REFERRAL PROGRAM
+                 ════════════════════════════════════════ -->
+            <div x-show="activeTab === 'referrals'" class="space-y-6" style="display: none;"
+                 x-data="{ 
+                     copySuccess: false,
+                     referralLink: '{{ route('register') }}?ref={{ auth()->user()->referral_code }}',
+                     copyLink() {
+                         navigator.clipboard.writeText(this.referralLink);
+                         this.copySuccess = true;
+                         setTimeout(() => { this.copySuccess = false; }, 2000);
+                     }
+                 }">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden border border-brand-teal/15">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl"></div>
+                    <h2 class="text-xl font-bold text-brand-white">Client Referral Program</h2>
+                    <p class="text-xs text-brand-gray mt-1 leading-relaxed">Refer other businesses or organizations to Diwebs Tech. When they sign up and initiate a project, you'll earn a referral bonus credit!</p>
+                </div>
+
+                <!-- Referral Analytics Widgets -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                        <span class="text-[10px] uppercase font-bold text-brand-gray">Total Referrals</span>
+                        <div class="text-2xl font-extrabold text-brand-white mt-1">{{ $referrals->count() }}</div>
+                        <p class="text-[9px] text-brand-gray mt-1">Successfully registered accounts</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                        <span class="text-[10px] uppercase font-bold text-brand-gray">Earned &amp; Paid Bonuses</span>
+                        <div class="text-2xl font-extrabold text-emerald-400 mt-1">@money($totalBonusEarned)</div>
+                        <p class="text-[9px] text-brand-gray mt-1">Settled and credited to billing</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                        <span class="text-[10px] uppercase font-bold text-brand-gray">Pending Bonuses</span>
+                        <div class="text-2xl font-extrabold text-brand-cyan mt-1">@money($pendingBonus)</div>
+                        <p class="text-[9px] text-brand-gray mt-1">Awaiting administrator clearance</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Invitation center -->
+                    <div class="lg:col-span-1 glass-card rounded-2xl p-6 border border-brand-teal/25 space-y-5">
+                        <h3 class="text-sm font-bold text-brand-white">Your Referral Code</h3>
+                        
+                        <div class="p-4 bg-brand-dark-secondary/50 border border-brand-teal/15 rounded-xl text-center space-y-2">
+                            <span class="text-[10px] text-brand-gray uppercase font-bold tracking-wider block">Share unique code</span>
+                            <div class="text-xl font-mono font-extrabold text-brand-cyan tracking-wider py-1 bg-brand-dark rounded border border-brand-teal/10">
+                                {{ auth()->user()->referral_code }}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider">Referral Link</label>
+                            <div class="flex gap-2">
+                                <input type="text" readonly :value="referralLink" class="flex-grow rounded-lg border border-brand-teal/20 bg-[#25282D]/60 px-3 py-2 text-xs text-brand-gray font-mono focus:outline-none">
+                                <button @click="copyLink()" class="rounded-lg bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary px-3 font-bold text-xs hover:opacity-90 transition-all flex items-center justify-center">
+                                    <span x-text="copySuccess ? 'Copied!' : 'Copy'"></span>
+                                </button>
+                            </div>
+                            <p class="text-[9px] text-brand-gray leading-relaxed mt-1">Clients onboarding via this link will automatically have your referral code pre-filled during signup.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Referral logs -->
+                    <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-4">
+                        <h3 class="text-sm font-bold text-brand-white">Referrals History</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="text-[10px] uppercase font-bold text-brand-gray border-b border-brand-teal/10">
+                                    <tr>
+                                        <th class="py-3">Invited Client</th>
+                                        <th class="py-3">Email Address</th>
+                                        <th class="py-3">Date Joined</th>
+                                        <th class="py-3">Estimated Bonus</th>
+                                        <th class="py-3 text-right">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-brand-teal/5 text-brand-white">
+                                    @forelse($referrals as $ref)
+                                        <tr>
+                                            <td class="py-3 font-semibold">{{ $ref->referee->name }}</td>
+                                            <td class="py-3 font-mono text-[10px] text-brand-gray">{{ $ref->referee->email }}</td>
+                                            <td class="py-3">{{ $ref->created_at->format('M d, Y') }}</td>
+                                            <td class="py-3 font-mono font-bold text-brand-cyan">@money($ref->bonus_amount)</td>
+                                            <td class="py-3 text-right">
+                                                <span class="rounded px-2.5 py-0.5 text-[9px] uppercase font-bold 
+                                                    @if($ref->status === 'paid') bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                                    @elseif($ref->status === 'approved') bg-brand-teal/10 text-brand-cyan border border-brand-teal/20
+                                                    @elseif($ref->status === 'void') bg-rose-500/10 text-rose-400 border border-rose-500/20
+                                                    @else bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse
+                                                    @endif">
+                                                    {{ $ref->status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="py-6 text-center text-brand-gray text-xs">No referral history logged. Send your code or link to invite clients!</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

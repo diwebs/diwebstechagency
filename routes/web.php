@@ -31,6 +31,11 @@ Route::get('/careers', [PageController::class, 'careers'])->name('careers');
 Route::get('/services/{slug}', [PageController::class, 'serviceDetail'])->name('services.detail');
 Route::get('/legal/{slug}', [PageController::class, 'legal'])->name('legal.show');
 
+// Web Onboarding/Installation Wizard Routes
+Route::get('/install', [App\Http\Controllers\InstallController::class, 'showInstallForm'])->name('install.index');
+Route::post('/install/database', [App\Http\Controllers\InstallController::class, 'setupDatabase'])->name('install.database');
+Route::post('/install/admin', [App\Http\Controllers\InstallController::class, 'setupAdmin'])->name('install.admin');
+
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -174,6 +179,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/update', [PortalController::class, 'updateSettings'])->name('settings.update');
         Route::post('/ai/chat', [PortalController::class, 'askAiAssistant'])->name('ai.chat');
         Route::get('/file/{id}/download', [PortalController::class, 'downloadFile'])->name('file.download');
+        Route::post('/review/store', [PortalController::class, 'storeReview'])->name('review.store');
     });
 
     // Super Admin Dashboard Routing (RBAC protected)
@@ -181,6 +187,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::post('/users/{id}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
+        Route::get('/referrals', [AdminController::class, 'referrals'])->name('referrals');
+        Route::post('/referrals/{id}/pay', [AdminController::class, 'payReferralBonus'])->name('referrals.pay');
+        Route::post('/referrals/{id}/status', [AdminController::class, 'updateReferralStatus'])->name('referrals.status');
         Route::get('/exams', [AdminController::class, 'exams'])->name('exams');
         Route::get('/centers', [AdminController::class, 'centers'])->name('centers');
         Route::get('/security-logs', [AdminController::class, 'securityLogs'])->name('security-logs');

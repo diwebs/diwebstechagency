@@ -48,6 +48,10 @@
                            class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.portal-control') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
                             <span>💼</span> Client Portals
                         </a>
+                        <a href="{{ route('admin.referrals') }}" 
+                           class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.referrals') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
+                            <span>🤝</span> Referrals Tracker
+                        </a>
                         <a href="{{ route('admin.finance') }}" 
                            class="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-all {{ request()->routeIs('admin.finance') ? 'bg-brand-cyan text-brand-dark-secondary' : 'text-brand-gray hover:text-brand-cyan hover:bg-brand-teal/10' }}">
                             <span>💳</span> Financial Billing

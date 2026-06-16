@@ -214,6 +214,7 @@
             </div>
 
             <!-- Footer of Menu -->
+            @if(!file_exists(storage_path('installed')))
             <div class="border-t border-brand-teal/10 pt-6">
                 <div class="flex flex-col gap-2">
                     <span class="text-[10px] text-brand-gray uppercase tracking-wider font-semibold block text-center mb-1">Testing Quick Bypass</span>
@@ -225,6 +226,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 

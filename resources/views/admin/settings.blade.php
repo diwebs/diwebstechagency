@@ -28,6 +28,19 @@
                                class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
                     </div>
 
+                    <!-- Referral Bonus Amount -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Default Referral Bonus Amount ($)</label>
+                        <input type="number" 
+                               name="referral_bonus_amount" 
+                               value="{{ $settings['referral_bonus_amount'] }}" 
+                               required 
+                               step="0.01"
+                               min="0"
+                               class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        <span class="block text-[10px] text-brand-gray mt-1">Configure the amount credited to the referrer when a new client signs up using their code.</span>
+                    </div>
+
                     <!-- System state flags -->
                     <div class="space-y-4 pt-4 border-t border-brand-teal/10">
                         <!-- Maintenance Mode -->

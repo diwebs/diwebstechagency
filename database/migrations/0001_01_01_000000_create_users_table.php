@@ -18,6 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('role')->default('student'); // super_admin, branch_admin, client, student, candidate
+            $table->string('phone')->nullable();
+            $table->string('country')->nullable();
             $table->string('status')->default('active'); // active, suspended
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();

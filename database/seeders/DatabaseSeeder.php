@@ -37,7 +37,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'client@diwebstechagency.website',
             'password' => 'password',
             'role' => 'client',
-            'status' => 'active'
+            'status' => 'active',
+            'referral_code' => 'REF-SARAH1'
         ]);
 
         $candidate = User::create([
@@ -292,5 +293,34 @@ class DatabaseSeeder extends Seeder
             'status' => 'open',
             'priority' => 'high'
         ]);
+
+        // 7. Seed Reviews
+        \App\Models\Review::create([
+            'user_id' => $client->id,
+            'client_name' => 'Sarah Jenkins',
+            'company_name' => 'E-Gov Group',
+            'rating' => 5,
+            'comment' => 'Diwebs Tech delivered our CBT Infrastructure Portal ahead of schedule. The security features and real-time syncing exceed our expectations.',
+            'status' => 'approved'
+        ]);
+
+        \App\Models\Review::create([
+            'user_id' => $client->id,
+            'client_name' => 'Dr. Marcus Vance',
+            'company_name' => 'Apex Health Solutions',
+            'rating' => 5,
+            'comment' => 'The software architecture they developed for our medical portal is robust and scalable. Absolute professionals in every step of the lifecycle.',
+            'status' => 'approved'
+        ]);
+
+        \App\Models\Review::create([
+            'user_id' => $client->id,
+            'client_name' => 'Elena Rostova',
+            'company_name' => 'Vanguard Logistics',
+            'rating' => 4,
+            'comment' => 'Incredible response times and highly skilled software engineers. They turned our complex logistics pipeline request into a sleek dynamic dashboard.',
+            'status' => 'approved'
+        ]);
     }
 }
+

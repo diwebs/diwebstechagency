@@ -5,7 +5,7 @@ namespace App\Helpers;
 class PaymentHelper
 {
     /**
-     * Format the price based on default currency configurations.
+     * Format the price based on default currency configurations and authenticated user region.
      *
      * @param float $amount
      * @param int $decimals
@@ -15,6 +15,25 @@ class PaymentHelper
     {
         $symbol = cache('payment_currency_symbol', '$');
         $position = cache('payment_currency_position', 'before');
+        
+        if (auth()->check()) {
+            $user = auth()->user();
+            $country = strtolower(trim($user->country ?? ''));
+            if ($country === 'nigeria') {
+                $symbol = '₦';
+                $rate = (float)cache('currency_exchange_rate_ngn', 1500.00);
+                $amount = $amount * $rate;
+            } elseif (in_array($country, ['united kingdom', 'uk', 'gb', 'great britain'])) {
+                $symbol = '£';
+                $rate = (float)cache('currency_exchange_rate_gbp', 0.80);
+                $amount = $amount * $rate;
+            } elseif (in_array($country, ['europe', 'germany', 'france', 'italy', 'spain', 'netherlands', 'belgium', 'ireland'])) {
+                $symbol = '€';
+                $rate = (float)cache('currency_exchange_rate_eur', 0.92);
+                $amount = $amount * $rate;
+            }
+        }
+        
         $formatted = number_format($amount, $decimals);
         
         return $position === 'before' ? $symbol . $formatted : $formatted . $symbol;

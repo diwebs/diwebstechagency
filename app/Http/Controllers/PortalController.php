@@ -62,6 +62,14 @@ class PortalController extends Controller
         // Project files
         $projectFiles = ProjectFile::whereIn('project_id', $projects->pluck('id'))->orderBy('created_at', 'desc')->get();
 
+        // 8. Fetch user reviews
+        $reviews = \App\Models\Review::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+
+        // 9. Fetch client referrals
+        $referrals = \App\Models\Referral::with('referee')->where('referrer_id', $user->id)->orderBy('created_at', 'desc')->get();
+        $totalBonusEarned = \App\Models\Referral::where('referrer_id', $user->id)->where('status', 'paid')->sum('bonus_amount');
+        $pendingBonus = \App\Models\Referral::where('referrer_id', $user->id)->whereIn('status', ['pending', 'approved'])->sum('bonus_amount');
+
         return view('portal.dashboard', compact(
             'projects',
             'unpaidInvoices',
@@ -75,7 +83,11 @@ class PortalController extends Controller
             'totalBudget',
             'totalPaid',
             'taskCompletionRate',
-            'projectFiles'
+            'projectFiles',
+            'reviews',
+            'referrals',
+            'totalBonusEarned',
+            'pendingBonus'
         ));
     }
 
@@ -646,5 +658,33 @@ class PortalController extends Controller
         ]);
 
         return back()->with('success', 'Project request created successfully and submitted for admin validation.');
+    }
+
+    public function storeReview(Request $request)
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'required|string|min:5|max:1000',
+            'company_name' => 'nullable|string|max:255'
+        ]);
+
+        $user = $request->user();
+
+        // Check if there is cached or saved company name
+        $companyName = $request->input('company_name');
+        if (empty($companyName)) {
+            $companyName = cache('client_company_' . $user->id);
+        }
+
+        \App\Models\Review::create([
+            'user_id' => $user->id,
+            'client_name' => $user->name,
+            'company_name' => $companyName,
+            'rating' => $request->input('rating'),
+            'comment' => $request->input('comment'),
+            'status' => 'approved' // auto-approved as per implementation plan
+        ]);
+
+        return back()->with('success', 'Thank you! Your review and trust rating have been submitted and are now live on the homepage.');
     }
 }

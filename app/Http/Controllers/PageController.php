@@ -9,7 +9,11 @@ class PageController extends Controller
 {
     public function home()
     {
-        return view('pages.home');
+        $reviews = collect();
+        if (\Illuminate\Support\Facades\Schema::hasTable('reviews')) {
+            $reviews = \App\Models\Review::where('status', 'approved')->orderBy('created_at', 'desc')->get();
+        }
+        return view('pages.home', compact('reviews'));
     }
 
     public function about()

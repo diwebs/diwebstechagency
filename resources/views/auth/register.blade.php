@@ -104,6 +104,11 @@
                     <label for="password_confirmation" class="block text-xs font-semibold text-brand-cyan uppercase">Confirm Password</label>
                     <input type="password" name="password_confirmation" id="password_confirmation" x-model="password_confirmation" class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
                 </div>
+
+                <div x-show="role === 'client'" class="pt-2">
+                    <label for="referral_code" class="block text-xs font-semibold text-brand-cyan uppercase">Referral Code (Optional)</label>
+                    <input type="text" name="referral_code" id="referral_code" x-model="referral_code" placeholder="e.g. REF-SARAH1" class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
             </div>
 
             <!-- STEP 3: Identity Verification (OTP) -->
@@ -202,13 +207,14 @@
     function registerForm() {
         return {
             step: 1,
-            role: 'student',
+            role: new URLSearchParams(window.location.search).get('ref') ? 'client' : 'student',
             name: '',
             email: '',
             phone: '',
             country: 'Nigeria',
             password: '',
             password_confirmation: '',
+            referral_code: new URLSearchParams(window.location.search).get('ref') || '',
             verification_code: '',
             enable_2fa: true,
             passkey_enroll: false,

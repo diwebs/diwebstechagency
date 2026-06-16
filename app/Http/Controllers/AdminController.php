@@ -396,17 +396,24 @@ class AdminController extends Controller
             'app_name' => cache('app_name', 'Diwebs Tech Agency'),
             'maintenance_mode' => cache('maintenance_mode', false),
             'allow_registration' => cache('allow_registration', true),
-            'auto_backups' => cache('auto_backups', true)
+            'auto_backups' => cache('auto_backups', true),
+            'referral_bonus_amount' => cache('referral_bonus_amount', 50.00)
         ];
         return view('admin.settings', compact('settings'));
     }
 
     public function updateSettings(Request $request)
     {
+        $request->validate([
+            'app_name' => 'required|string|max:255',
+            'referral_bonus_amount' => 'required|numeric|min:0'
+        ]);
+
         cache(['app_name' => $request->app_name]);
         cache(['maintenance_mode' => $request->has('maintenance_mode')]);
         cache(['allow_registration' => $request->has('allow_registration')]);
         cache(['auto_backups' => $request->has('auto_backups')]);
+        cache(['referral_bonus_amount' => (float)$request->referral_bonus_amount]);
         return back()->with('success', 'System branding settings updated successfully.');
     }
 
@@ -905,6 +912,47 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Live proctored examination successfully scheduled.');
+    }
+
+    public function referrals()
+    {
+        $referrals = \App\Models\Referral::with(['referrer', 'referee'])->orderBy('created_at', 'desc')->paginate(15);
+        $totalPaid = \App\Models\Referral::where('status', 'paid')->sum('bonus_amount');
+        $totalApproved = \App\Models\Referral::where('status', 'approved')->sum('bonus_amount');
+        $totalPending = \App\Models\Referral::where('status', 'pending')->sum('bonus_amount');
+
+        return view('admin.referrals', compact('referrals', 'totalPaid', 'totalApproved', 'totalPending'));
+    }
+
+    public function payReferralBonus($id)
+    {
+        $referral = \App\Models\Referral::findOrFail($id);
+        $referral->update([
+            'status' => 'paid',
+            'paid_at' => now()
+        ]);
+
+        return back()->with('success', 'Referral bonus marked as paid successfully.');
+    }
+
+    public function updateReferralStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,approved,paid,void'
+        ]);
+
+        $referral = \App\Models\Referral::findOrFail($id);
+        
+        $updateData = ['status' => $request->status];
+        if ($request->status === 'paid' && !$referral->paid_at) {
+            $updateData['paid_at'] = now();
+        } elseif ($request->status !== 'paid') {
+            $updateData['paid_at'] = null;
+        }
+
+        $referral->update($updateData);
+
+        return back()->with('success', 'Referral status updated to ' . $request->status . '.');
     }
 }
 

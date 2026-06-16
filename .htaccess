@@ -1,19 +1,35 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    
-    # Secure htaccess file itself
-    <Files .htaccess>
-        order allow,deny
-        deny from all
-    </Files>
 
     # Disable directory browsing
     Options -Indexes
 
-    # Redirect root requests to /public/index.php
+    # -------------------------------------------------------
+    # SECURITY: Block direct access to sensitive folders
+    # -------------------------------------------------------
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)(\/.*)?$ - [F,L,NC]
+
+    # -------------------------------------------------------
+    # SECURITY: Block access to sensitive files
+    # -------------------------------------------------------
+    RewriteRule ^(\.env|artisan|composer\.(json|lock)|phpunit\.xml|package\.json|webpack\.mix\.js|vite\.config\.js)(\/.*)?$ - [F,L,NC]
+
+    # -------------------------------------------------------
+    # ROUTING: Serve existing files and folders from public/
+    # -------------------------------------------------------
     RewriteRule ^$ public/ [L]
-    
-    # Redirect all other folder requests to public/
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+
+# Block direct access to .env and other dot-files at the file level
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block artisan and composer files
+<FilesMatch "^(artisan|composer\.json|composer\.lock|phpunit\.xml|package\.json|package-lock\.json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

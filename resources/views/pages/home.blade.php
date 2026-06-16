@@ -274,6 +274,66 @@
         </div>
     </div>
 
+    <!-- Client Success Stories / Trust Ratings Section -->
+    <div class="mx-auto max-w-7xl px-6 lg:px-8 mb-28">
+        <div class="mx-auto max-w-2xl lg:text-center mb-16">
+            <h2 class="text-base font-semibold text-brand-cyan uppercase tracking-wider">Client Trust</h2>
+            <p class="mt-2 text-3xl font-bold tracking-tight text-brand-white sm:text-4xl">
+                Success Stories &amp; Trust Ratings
+            </p>
+            <p class="mt-4 text-xs text-brand-gray leading-relaxed max-w-xl mx-auto">
+                Discover what our partners, clients, and institutions say about their digital engineering journey with Diwebs Tech.
+            </p>
+        </div>
+
+        <!-- Swiper Reviews Container -->
+        <div class="swiper reviews-swiper relative max-w-5xl mx-auto px-6 sm:px-12">
+            <div class="swiper-wrapper py-6">
+                @forelse($reviews as $review)
+                    <div class="swiper-slide h-auto">
+                        <div class="glass-card h-full rounded-2xl p-8 border border-brand-teal/15 flex flex-col justify-between relative overflow-hidden backdrop-blur-md">
+                            <div class="absolute -top-6 -right-6 w-24 h-24 bg-brand-cyan/5 rounded-full blur-xl"></div>
+                            
+                            <!-- Star rating -->
+                            <div class="flex gap-1 text-brand-cyan text-sm mb-4">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <span>{{ $i <= $review->rating ? '★' : '☆' }}</span>
+                                @endfor
+                            </div>
+                            
+                            <!-- Review text -->
+                            <p class="text-sm text-brand-gray leading-relaxed flex-grow italic font-light select-text">
+                                "{{ $review->comment }}"
+                            </p>
+                            
+                            <!-- Reviewer Details -->
+                            <div class="mt-6 flex items-center gap-3 pt-4 border-t border-brand-teal/10">
+                                <div class="h-10 w-10 rounded-full bg-brand-teal/15 border border-brand-teal/30 flex items-center justify-center font-bold text-xs text-brand-cyan select-none">
+                                    {{ strtoupper(substr($review->client_name, 0, 2)) }}
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-brand-white">{{ $review->client_name }}</h4>
+                                    <span class="text-[10px] text-brand-gray block">{{ $review->company_name ?? 'Client Partner' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="swiper-slide h-auto">
+                        <div class="glass-card rounded-2xl p-8 text-center text-brand-gray text-xs">
+                            No verified success stories published yet.
+                        </div>
+                    </div>
+                @endforelse
+            </div>
+            
+            <!-- Swiper Controls -->
+            <div class="swiper-button-prev !text-brand-cyan !w-6 !h-6 !left-0 after:!text-xs"></div>
+            <div class="swiper-button-next !text-brand-cyan !w-6 !h-6 !right-0 after:!text-xs"></div>
+            <div class="swiper-pagination !-bottom-2"></div>
+        </div>
+    </div>
+
     <!-- Lead Intake CRM Form Section -->
     <div id="contact-section" class="mx-auto max-w-3xl px-6 lg:px-8 pb-12">
         <div class="glass-card rounded-3xl p-8 md:p-12 relative overflow-hidden">
@@ -366,6 +426,34 @@
                         }
                     }, 50);
                 }
+            }
+        });
+
+        const reviewsSwiper = new Swiper('.reviews-swiper', {
+            loop: true,
+            slidesPerView: 1,
+            spaceBetween: 24,
+            autoplay: {
+                delay: 6000,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                    spaceBetween: 24,
+                },
+                1024: {
+                    slidesPerView: 3,
+                    spaceBetween: 32,
+                },
             }
         });
 
