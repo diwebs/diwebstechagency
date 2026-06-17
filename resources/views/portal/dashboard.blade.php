@@ -932,12 +932,70 @@
                         <h3 class="text-sm font-bold text-brand-cyan tracking-wider uppercase">Unpaid Milestone Invoices</h3>
                         
                         @forelse($unpaidInvoices as $invoice)
-                            <div class="glass-card rounded-2xl p-6 border border-brand-teal/20 space-y-4" x-data="{ payType: 'full', customAmount: '' }">
+                            @php
+                                $baseAmount = $invoice->amount;
+                                $symbol = \App\Helpers\SettingsHelper::get('payment_currency_symbol', '$');
+                                $position = \App\Helpers\SettingsHelper::get('payment_currency_position', 'before');
+                                $exchangeRate = 1.0;
+                                
+                                if (auth()->check()) {
+                                    $user = auth()->user();
+                                    $country = strtolower(trim($user->country ?? ''));
+                                    if ($country === 'nigeria') {
+                                        $symbol = '₦';
+                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_ngn', 1500.00);
+                                    } elseif (in_array($country, ['united kingdom', 'uk', 'gb', 'great britain'])) {
+                                        $symbol = '£';
+                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_gbp', 0.80);
+                                    } elseif (in_array($country, ['europe', 'germany', 'france', 'italy', 'spain', 'netherlands', 'belgium', 'ireland'])) {
+                                        $symbol = '€';
+                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_eur', 0.92);
+                                    }
+                                }
+                                
+                                $localInvoiceAmount = $baseAmount * $exchangeRate;
+                                $taxRate = (float)\App\Helpers\SettingsHelper::get('payment_tax_rate', 0.0);
+                                $taxLabel = \App\Helpers\SettingsHelper::get('payment_tax_label', 'VAT');
+                                $activeGateway = \App\Helpers\PaymentHelper::activeGateway();
+                                
+                                $bankDetails = \App\Helpers\PaymentHelper::bankDetails();
+                                $cryptoDetails = \App\Helpers\PaymentHelper::cryptoDetails();
+                            @endphp
+                            <div class="glass-card rounded-2xl p-6 border border-brand-teal/20 space-y-4" 
+                                 x-data="{ 
+                                    payType: 'full', 
+                                    customAmount: '',
+                                    baseAmount: {{ $localInvoiceAmount }},
+                                    taxRate: {{ $taxRate }},
+                                    get subtotal() {
+                                        if (this.payType === 'full') {
+                                            return this.baseAmount;
+                                        } else if (this.payType === 'installment') {
+                                            return this.baseAmount / 2;
+                                        } else {
+                                            let amt = parseFloat(this.customAmount) || 0;
+                                            return amt;
+                                        }
+                                    },
+                                    get taxAmount() {
+                                        return (this.subtotal * (this.taxRate / 100));
+                                    },
+                                    get total() {
+                                        return this.subtotal + this.taxAmount;
+                                    },
+                                    formatCurrency(amt) {
+                                        let formatted = parseFloat(amt).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        return '{{ $position }}' === 'before' ? '{{ $symbol }}' + formatted : formatted + '{{ $symbol }}';
+                                    }
+                                 }">
                                 <div class="flex justify-between items-start gap-4">
                                     <div>
                                         <span class="text-[10px] text-brand-cyan font-bold uppercase tracking-wider">Invoice #{{ $invoice->invoice_number }}</span>
-                                        <h4 class="text-xs font-bold text-brand-white mt-1">{{ $invoice->project->title }}</h4>
-                                        <p class="text-[10px] text-brand-gray">Due Date: {{ $invoice->due_date->format('M d, Y') }}</p>
+                                        <h4 class="text-xs font-bold text-brand-white mt-1">{{ $invoice->title ?? $invoice->project?->title ?? 'General/Standalone Service' }}</h4>
+                                        @if($invoice->description)
+                                            <p class="text-[10px] text-brand-gray mt-1 leading-relaxed">{{ $invoice->description }}</p>
+                                        @endif
+                                        <p class="text-[10px] text-brand-gray mt-1.5">Due Date: {{ $invoice->due_date->format('M d, Y') }}</p>
                                     </div>
                                     <strong class="text-lg font-mono text-brand-white">@money($invoice->amount)</strong>
                                 </div>
@@ -962,15 +1020,78 @@
                                     </div>
 
                                     <div x-show="payType === 'partial'" class="pt-2">
-                                        <input type="number" x-model="customAmount" placeholder="Enter amount to pay" class="rounded-lg border border-brand-teal/20 bg-brand-dark px-3 py-2 text-xs text-brand-white w-full">
+                                        <input type="number" step="any" x-model="customAmount" :required="payType === 'partial'" min="1" :max="baseAmount" placeholder="Enter amount to pay in {{ $symbol }}" class="rounded-lg border border-brand-teal/20 bg-brand-dark px-3 py-2 text-xs text-brand-white w-full">
                                     </div>
                                 </div>
+
+                                <!-- Interactive invoice receipt breakdown -->
+                                <div class="p-3.5 bg-brand-dark-secondary/20 border border-brand-teal/5 rounded-xl space-y-2 text-xs">
+                                    <div class="flex justify-between items-center text-brand-gray">
+                                        <span>Subtotal:</span>
+                                        <span class="font-mono text-brand-white" x-text="formatCurrency(subtotal)"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-brand-gray">
+                                        <span>{{ $taxLabel }} ({{ $taxRate }}%):</span>
+                                        <span class="font-mono text-brand-white" x-text="formatCurrency(taxAmount)"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-t border-brand-teal/10 pt-2 font-bold text-brand-white">
+                                        <span>Total Due:</span>
+                                        <span class="font-mono text-brand-cyan" x-text="formatCurrency(total)"></span>
+                                    </div>
+                                </div>
+
+                                @if($activeGateway === 'bank_transfer')
+                                    <div class="p-4 rounded-xl border border-brand-teal/20 bg-brand-teal/5 space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">🏦</span>
+                                            <span class="text-xs font-bold text-brand-white">Bank Transfer Details</span>
+                                        </div>
+                                        <div class="text-[11px] text-brand-gray space-y-1 bg-[#1A1D21]/60 p-3 rounded-lg border border-brand-teal/5 font-mono">
+                                            <div>Bank Name: <span class="text-brand-white">{{ $bankDetails['name'] }}</span></div>
+                                            <div>Account Name: <span class="text-brand-white">{{ $bankDetails['account_name'] }}</span></div>
+                                            <div>Account Number: <span class="text-brand-white text-xs font-bold">{{ $bankDetails['account_number'] }}</span></div>
+                                            @if($bankDetails['routing_number'])
+                                                <div>Routing Number: <span class="text-brand-white">{{ $bankDetails['routing_number'] }}</span></div>
+                                            @endif
+                                            @if($bankDetails['swift_code'])
+                                                <div>SWIFT / BIC Code: <span class="text-brand-white">{{ $bankDetails['swift_code'] }}</span></div>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-brand-gray/80 leading-relaxed">
+                                            Please make your transfer of <strong class="text-brand-cyan" x-text="formatCurrency(total)"></strong> to the account above, then click the button below to submit your transaction verification request.
+                                        </p>
+                                    </div>
+                                @elseif($activeGateway === 'crypto')
+                                    <div class="p-4 rounded-xl border border-brand-teal/20 bg-brand-teal/5 space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">🪙</span>
+                                            <span class="text-xs font-bold text-brand-white">Cryptocurrency Payment Addresses</span>
+                                        </div>
+                                        <div class="text-[11px] text-brand-gray space-y-2 bg-[#1A1D21]/60 p-3 rounded-lg border border-brand-teal/5 font-mono">
+                                            @if($cryptoDetails['btc'])
+                                                <div>
+                                                    <span class="text-amber-500 font-bold block mb-0.5">Bitcoin (BTC) Address:</span>
+                                                    <span class="text-brand-white break-all text-[10px] select-all bg-black/30 p-1.5 rounded block">{{ $cryptoDetails['btc'] }}</span>
+                                                </div>
+                                            @endif
+                                            @if($cryptoDetails['usdt'])
+                                                <div class="mt-2">
+                                                    <span class="text-emerald-500 font-bold block mb-0.5">USDT (TRC-20) Address:</span>
+                                                    <span class="text-brand-white break-all text-[10px] select-all bg-black/30 p-1.5 rounded block">{{ $cryptoDetails['usdt'] }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-brand-gray/80 leading-relaxed">
+                                            Send exactly <strong class="text-brand-cyan" x-text="formatCurrency(total)"></strong> (equivalent value in BTC/USDT) to either of the addresses above, then click the button below to submit your payment verification request.
+                                        </p>
+                                    </div>
+                                @endif
 
                                 <!-- Pay execution -->
                                 <form action="{{ route('portal.invoice.pay', $invoice->id) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="payment_type" :value="payType">
-                                    <input type="hidden" name="partial_amount" :value="customAmount">
+                                    <input type="hidden" name="partial_amount" :value="(payType === 'partial') ? ((parseFloat(customAmount) || 0) / {{ $exchangeRate }}) : 0">
                                     
                                     <!-- Display selected gateway button -->
                                     <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary font-bold text-xs py-3.5 hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer">
@@ -994,7 +1115,7 @@
                                 <div class="border-b border-brand-teal/5 pb-3 last:border-0 last:pb-0 flex justify-between items-center">
                                     <div>
                                         <span class="text-[9px] text-brand-cyan font-mono block">#{{ $inv->invoice_number }}</span>
-                                        <span class="text-[10px] text-brand-white block font-semibold">{{ Str::limit($inv->project->title, 20) }}</span>
+                                        <span class="text-[10px] text-brand-white block font-semibold">{{ Str::limit($inv->title ?? $inv->project?->title ?? 'General Service', 20) }}</span>
                                         <span class="text-[8px] text-brand-gray block">{{ $inv->created_at->format('M d, Y') }}</span>
                                     </div>
                                     <div class="text-right">
@@ -1184,22 +1305,44 @@
 
                 <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-4">
                     <div class="divide-y divide-brand-teal/5">
-                        <div class="py-4 flex gap-3">
-                            <span class="text-lg">💰</span>
-                            <div>
-                                <h4 class="text-xs font-bold text-brand-white">Milestone Invoice Dispatched</h4>
-                                <p class="text-[10px] text-brand-gray mt-0.5">Invoice #INV-2026-002 for $60,000.00 is outstanding. Due date is in 15 days.</p>
-                                <span class="text-[8px] text-brand-gray block mt-1">1 hour ago</span>
+                        @forelse($userNotifications as $notification)
+                            @php
+                                $emoji = match($notification->type) {
+                                    'invoice' => '💰',
+                                    'contract' => '📝',
+                                    'service' => '🛠️',
+                                    'ticket' => '🎟️',
+                                    'project' => '🚀',
+                                    'broadcast' => '📢',
+                                    'center' => '🏫',
+                                    'exam' => '🏆',
+                                    'warning' => '⚠️',
+                                    'termination' => '🚨',
+                                    'academy', 'course' => '🎓',
+                                    default => '🔔',
+                                };
+                            @endphp
+                            <div class="py-4 flex gap-3">
+                                <span class="text-lg">{{ $emoji }}</span>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <h4 class="text-xs font-bold text-brand-white">{{ $notification->title }}</h4>
+                                        <span class="rounded bg-brand-teal/15 text-brand-cyan text-[8px] font-extrabold uppercase px-1.5 py-0.5">{{ ucfirst($notification->type ?? 'System') }}</span>
+                                        @if(!$notification->is_read)
+                                            <span class="rounded bg-rose-500/20 text-rose-400 text-[8px] font-extrabold uppercase px-1.5 py-0.5">New</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-[10px] text-brand-gray/80 leading-relaxed">{{ $notification->message }}</p>
+                                    <span class="text-[8px] text-brand-gray/50 block mt-1 font-mono">{{ $notification->created_at->diffForHumans() }}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="py-4 flex gap-3">
-                            <span class="text-lg">🏆</span>
-                            <div>
-                                <h4 class="text-xs font-bold text-brand-white">Milestone Stage Signed Off</h4>
-                                <p class="text-[10px] text-brand-gray mt-0.5">Jude Carter approved the "System Design &amp; Database Schema Approval" stage.</p>
-                                <span class="text-[8px] text-brand-gray block mt-1">2 days ago</span>
+                        @empty
+                            <div class="py-12 text-center text-brand-gray/60">
+                                <span class="text-4xl block mb-2">🔔</span>
+                                <p class="text-xs font-semibold">No notifications yet.</p>
+                                <p class="text-[10px] text-brand-gray/40 mt-1">Updates on your projects and invoices will be logged here.</p>
                             </div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>

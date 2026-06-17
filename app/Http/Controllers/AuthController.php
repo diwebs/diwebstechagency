@@ -381,13 +381,15 @@ class AuthController extends Controller
         ]);
 
         // Verify that OTP verification step was cleared in the current session
-        if (session('validated_register_email') !== $validated['email']) {
-            return back()->withErrors(['email' => 'Email verification is required before finalizing account creation.']);
+        $email = strtolower(trim($validated['email']));
+        $validatedEmail = session('validated_register_email');
+        if (empty($validatedEmail) || strtolower(trim($validatedEmail)) !== $email) {
+            return back()->withInput()->withErrors(['email' => 'Email verification is required before finalizing account creation.']);
         }
 
         // Breached Password check using local dictionary and Pwned API
         if ($this->isPasswordBreached($validated['password'])) {
-            return back()->withErrors(['password' => 'This password has been flagged in global data breaches. Please choose a different key.']);
+            return back()->withInput()->withErrors(['password' => 'This password has been flagged in global data breaches. Please choose a different key.']);
         }
 
         $referrer = null;
@@ -742,9 +744,12 @@ class AuthController extends Controller
             case 'client':
                 return route('portal.dashboard');
             case 'student':
+            case 'instructor':
                 return route('academy.dashboard');
             case 'candidate':
                 return route('cbt.dashboard');
+            case 'partner':
+                return route('cbt.partner.dashboard');
             default:
                 return '/';
         }

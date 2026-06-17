@@ -249,6 +249,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Financial Operations Submodule
         Route::get('/finance', [AdminController::class, 'finance'])->name('finance');
+        Route::post('/finance/invoice/store', [AdminController::class, 'storeInvoice'])->name('finance.invoice.store');
         Route::post('/finance/invoice/{id}/status', [AdminController::class, 'updateInvoiceStatus'])->name('finance.invoice.status');
         
         // LMS Academic Courses Submodule

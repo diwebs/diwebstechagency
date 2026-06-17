@@ -185,6 +185,17 @@ class CbtController extends Controller
             'score' => round($score, 2),
             'ended_at' => now()
         ]);
+
+        // Create User Notification
+        \App\Models\UserNotification::create([
+            'user_id' => $session->user_id,
+            'title' => $status === 'flagged' ? 'Exam Session Flagged' : 'Exam Grading Completed',
+            'message' => $status === 'flagged' 
+                ? 'Your exam "' . $exam->title . '" was flagged due to security violations.' 
+                : 'Your exam "' . $exam->title . '" grading is complete. Score: ' . round($score, 2) . '% (Passing: ' . $exam->passing_score . '%).',
+            'type' => 'exam',
+            'is_read' => false
+        ]);
     }
 
     public function showResults($sessionId)
@@ -280,7 +291,16 @@ class CbtController extends Controller
 
     public function notificationsFeed(Request $request)
     {
-        return view('cbt.notifications');
+        $user = $request->user();
+        $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        \App\Models\UserNotification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return view('cbt.notifications', compact('notifications'));
     }
 
     public function profileInfo(Request $request)
@@ -387,7 +407,14 @@ class CbtController extends Controller
             array_merge($validated, ['status' => 'pending'])
         );
 
-        // Also create a notification inside academy/notifications or admin systems
+        \App\Models\UserNotification::create([
+            'user_id' => $user->id,
+            'title' => 'Center Partner Request Received',
+            'message' => 'Your application to register CBT center "' . $request->organization_name . '" has been received. Our site verification team will review your specs.',
+            'type' => 'system',
+            'is_read' => false
+        ]);
+
         return redirect()->route('cbt.dashboard')->with('success', 'Your application to Become a CBT Center Partner has been received! Our inspect team will review your infrastructure parameters.');
     }
 
@@ -518,6 +545,15 @@ class CbtController extends Controller
             'message' => $request->input('message', 'Webcam verification warning: Please face your terminal direct.')
         ]);
 
+        // Notify the candidate
+        \App\Models\UserNotification::create([
+            'user_id' => $session->user_id,
+            'title' => 'Proctor Safety Warning Issued',
+            'message' => $request->input('message', 'Webcam verification warning: Please face your terminal direct.'),
+            'type' => 'exam',
+            'is_read' => false
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -531,6 +567,15 @@ class CbtController extends Controller
             'proctor_id' => $request->user()->id,
             'action_type' => 'terminate',
             'message' => 'Terminal lock triggered: Proctor terminated the session immediately.'
+        ]);
+
+        // Notify the candidate
+        \App\Models\UserNotification::create([
+            'user_id' => $session->user_id,
+            'title' => 'Exam Session Terminated by Proctor',
+            'message' => 'Terminal lock triggered: Proctor terminated the session immediately.',
+            'type' => 'exam',
+            'is_read' => false
         ]);
 
         return response()->json(['success' => true]);
@@ -660,10 +705,14 @@ class CbtController extends Controller
         }
 
         if (CbtCenter::where('owner_id', $user->id)->count() === 0) {
+            $centerCode = 'CBT-LOS-' . str_pad($user->id, 3, '0', STR_PAD_LEFT);
+            if (CbtCenter::where('code', $centerCode)->exists()) {
+                $centerCode = 'CBT-LOS-' . $user->id . '-' . rand(100, 999);
+            }
             $center = CbtCenter::create([
                 'owner_id' => $user->id,
                 'name' => 'Diwebs Premier Lagos CBT Center',
-                'code' => 'CBT-LOS-001',
+                'code' => $centerCode,
                 'address' => '15 Herbert Macaulay Road, Yaba',
                 'city' => 'Lagos',
                 'capacity' => 150,

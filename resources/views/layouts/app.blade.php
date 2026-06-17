@@ -108,7 +108,13 @@
                             @if(auth()->user()->role === 'super_admin')
                                 <a href="{{ route('admin.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Admin</a>
                             @elseif(auth()->user()->role === 'client')
-                                <a href="{{ route('portal.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Client Area</a>
+                                <a href="{{ route('portal.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Client Workspace</a>
+                            @elseif(auth()->user()->role === 'student' || auth()->user()->role === 'instructor')
+                                <a href="{{ route('academy.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Academy Portal</a>
+                            @elseif(auth()->user()->role === 'candidate')
+                                <a href="{{ route('cbt.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">CBT Portal</a>
+                            @elseif(auth()->user()->role === 'partner')
+                                <a href="{{ route('cbt.partner.dashboard') }}" class="rounded-md bg-brand-teal/20 px-3.5 py-1.5 text-xs font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30 transition-all">Partner Area</a>
                             @endif
 
                             <form action="{{ route('logout') }}" method="POST" class="inline">
@@ -244,6 +250,12 @@
                                     <a href="{{ route('admin.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Admin Dashboard</a>
                                 @elseif(auth()->user()->role === 'client')
                                     <a href="{{ route('portal.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Client Workspace</a>
+                                @elseif(auth()->user()->role === 'student' || auth()->user()->role === 'instructor')
+                                    <a href="{{ route('academy.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Academy Portal</a>
+                                @elseif(auth()->user()->role === 'candidate')
+                                    <a href="{{ route('cbt.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">CBT Portal</a>
+                                @elseif(auth()->user()->role === 'partner')
+                                    <a href="{{ route('cbt.partner.dashboard') }}" class="block rounded-lg text-center bg-brand-teal/20 py-2.5 text-sm font-semibold text-brand-cyan border border-brand-teal/30 hover:bg-brand-teal/30" @click="mobileMenuOpen = false">Partner Area</a>
                                 @endif
                                 <form action="{{ route('logout') }}" method="POST" class="block w-full">
                                     @csrf
@@ -311,15 +323,11 @@
                         <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Security</span>
                     </a>
 
-                @elseif(auth()->user()->role === 'student')
-                    <!-- Student Tabs -->
+                @elseif(auth()->user()->role === 'student' || auth()->user()->role === 'instructor')
+                    <!-- Student / Instructor Tabs -->
                     <a href="{{ route('academy.dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('academy.dashboard') ? 'text-brand-cyan' : 'text-brand-gray' }}">
                         <span class="text-xl">🎓</span>
                         <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">LMS Home</span>
-                    </a>
-                    <a href="{{ route('cbt.dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('cbt.dashboard') ? 'text-brand-cyan' : 'text-brand-gray' }}">
-                        <span class="text-xl">📝</span>
-                        <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Assessments</span>
                     </a>
                     <a href="{{ route('profile.security') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('profile.security') ? 'text-brand-cyan' : 'text-brand-gray' }}">
                         <span class="text-xl">🔒</span>
@@ -331,6 +339,21 @@
                     <a href="{{ route('cbt.dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('cbt.dashboard') ? 'text-brand-cyan' : 'text-brand-gray' }}">
                         <span class="text-xl">📝</span>
                         <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Assessments</span>
+                    </a>
+                    <a href="{{ route('profile.security') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('profile.security') ? 'text-brand-cyan' : 'text-brand-gray' }}">
+                        <span class="text-xl">🔒</span>
+                        <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Security</span>
+                    </a>
+
+                @elseif(auth()->user()->role === 'partner')
+                    <!-- Partner Tabs -->
+                    <a href="{{ route('cbt.partner.dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('cbt.partner.dashboard') ? 'text-brand-cyan' : 'text-brand-gray' }}">
+                        <span class="text-xl">🤝</span>
+                        <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Partner Home</span>
+                    </a>
+                    <a href="{{ route('cbt.partner.centers') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('cbt.partner.centers') ? 'text-brand-cyan' : 'text-brand-gray' }}">
+                        <span class="text-xl">🏫</span>
+                        <span class="text-[9px] uppercase font-bold tracking-wider mt-0.5">Centers</span>
                     </a>
                     <a href="{{ route('profile.security') }}" class="flex flex-col items-center justify-center flex-1 text-center py-1 transition-all {{ request()->routeIs('profile.security') ? 'text-brand-cyan' : 'text-brand-gray' }}">
                         <span class="text-xl">🔒</span>
@@ -637,6 +660,7 @@
             </svg>
         </button>
 
+        @if(!request()->is('portal*'))
         {{-- Floating AI Assistant --}}
         <div class="fixed bottom-6 left-6 z-50">
             <button @click="aiOpen = !aiOpen"
@@ -683,6 +707,7 @@
                 </form>
             </div>
         </div>{{-- /AI Assistant --}}
+        @endif
 
     </footer>
 

@@ -189,4 +189,49 @@ class ProjectTrackingTest extends TestCase
         $response->assertSee('Web Development Project Success Rate');
         $response->assertSee('85%');
     }
+
+    public function test_admin_can_create_standalone_invoice(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.finance.invoice.store'), [
+                'client_id' => $this->client->id,
+                'invoice_number' => 'INV-TEST-STANDALONE',
+                'title' => 'Custom API Integration Fee',
+                'description' => 'Billing for custom REST integration.',
+                'amount' => 1500.00,
+                'due_date' => now()->addDays(5)->format('Y-m-d')
+            ]);
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('invoices', [
+            'client_id' => $this->client->id,
+            'invoice_number' => 'INV-TEST-STANDALONE',
+            'title' => 'Custom API Integration Fee',
+            'description' => 'Billing for custom REST integration.',
+            'amount' => 1500.00,
+            'status' => 'unpaid'
+        ]);
+    }
+
+    public function test_client_sees_standalone_invoice_on_billing(): void
+    {
+        Invoice::create([
+            'client_id' => $this->client->id,
+            'invoice_number' => 'INV-TEST-STANDALONE-2',
+            'title' => 'Custom Landing Page Design',
+            'description' => 'Refined UI layouts per contract section 4.',
+            'amount' => 950.00,
+            'status' => 'unpaid',
+            'due_date' => now()->addDays(10)
+        ]);
+
+        $response = $this->actingAs($this->client)
+            ->get(route('portal.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Custom Landing Page Design');
+        $response->assertSee('Refined UI layouts per contract section 4.');
+        $response->assertSee('INV-TEST-STANDALONE-2');
+    }
 }

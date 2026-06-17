@@ -70,6 +70,10 @@ class PortalController extends Controller
         $totalBonusEarned = \App\Models\Referral::where('referrer_id', $user->id)->where('status', 'paid')->sum('bonus_amount');
         $pendingBonus = \App\Models\Referral::where('referrer_id', $user->id)->whereIn('status', ['pending', 'approved'])->sum('bonus_amount');
 
+        // 10. Fetch user notifications
+        $userNotifications = \App\Models\UserNotification::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
+
         return view('portal.dashboard', compact(
             'projects',
             'unpaidInvoices',
@@ -87,7 +91,8 @@ class PortalController extends Controller
             'reviews',
             'referrals',
             'totalBonusEarned',
-            'pendingBonus'
+            'pendingBonus',
+            'userNotifications'
         ));
     }
 
@@ -136,6 +141,14 @@ class PortalController extends Controller
                 'details' => json_encode(['invoice_id' => $invoice->id, 'amount' => $amountToPay, 'gateway' => $gateway, 'type' => $paymentType])
             ]);
 
+            \App\Models\UserNotification::create([
+                'user_id' => $request->user()->id,
+                'title' => 'Invoice Payment Submitted',
+                'message' => 'Your payment of ' . \App\Helpers\PaymentHelper::format($amountToPay) . ' for Invoice #' . $invoice->invoice_number . ' has been submitted and is pending verification.',
+                'type' => 'invoice',
+                'is_read' => false
+            ]);
+
             $methodName = $gateway === 'bank_transfer' ? 'Bank Wire Transfer' : 'Cryptocurrency';
             return back()->with('success', 'Payment confirmation of ' . \App\Helpers\PaymentHelper::format($amountToPay) . ' submitted for ' . $methodName . '. Our finance team will verify the transaction and update your account shortly.');
         } else {
@@ -163,6 +176,14 @@ class PortalController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'details' => json_encode(['invoice_id' => $invoice->id, 'amount' => $amountToPay, 'gateway' => $gateway])
+            ]);
+
+            \App\Models\UserNotification::create([
+                'user_id' => $request->user()->id,
+                'title' => 'Invoice Paid Successfully',
+                'message' => 'Your payment of ' . \App\Helpers\PaymentHelper::format($amountToPay) . ' for Invoice #' . $invoice->invoice_number . ' was processed successfully.',
+                'type' => 'invoice',
+                'is_read' => false
             ]);
 
             $gatewayLabel = ucfirst(str_replace('_', ' ', $gateway));
@@ -268,6 +289,14 @@ class PortalController extends Controller
             'details' => json_encode(['contract_id' => $contract->id, 'action' => 'e_signed'])
         ]);
 
+        \App\Models\UserNotification::create([
+            'user_id' => $request->user()->id,
+            'title' => 'Digital Contract Signed',
+            'message' => 'You have successfully signed the Service Agreement: "' . $contract->title . '".',
+            'type' => 'project',
+            'is_read' => false
+        ]);
+
         return back()->with('success', 'Digital Agreement E-Signed successfully. Progress state logged.');
     }
 
@@ -356,6 +385,14 @@ class PortalController extends Controller
             'message' => 'Service request submitted for review: ' . $serviceType . ' (Budget: ' . $budgetRange . '). Proposal pending review.',
             'status' => 'open',
             'priority' => 'low'
+        ]);
+
+        \App\Models\UserNotification::create([
+            'user_id' => $request->user()->id,
+            'title' => 'Service Request Submitted',
+            'message' => 'Your service request for "' . $request->input('title') . '" has been submitted. Technical scope estimation has been generated.',
+            'type' => 'project',
+            'is_read' => false
         ]);
 
         return back()->with('success', 'Service request submitted successfully. Automated proposal details loaded in requests log.');
@@ -531,7 +568,7 @@ class PortalController extends Controller
             'priority' => 'required|in:low,medium,high,critical'
         ]);
 
-        Ticket::create([
+        $ticket = Ticket::create([
             'user_id' => $request->user()->id,
             'subject' => $request->input('subject'),
             'message' => $request->input('message'),
@@ -549,6 +586,14 @@ class PortalController extends Controller
                 'message' => $request->input('message'),
                 'priority' => $request->input('priority'),
             ]
+        ]);
+
+        \App\Models\UserNotification::create([
+            'user_id' => $request->user()->id,
+            'title' => 'Support Ticket Opened',
+            'message' => 'Ticket #' . $ticket->id . ' ("' . $request->input('subject') . '") has been successfully submitted to the Help Desk.',
+            'type' => 'system',
+            'is_read' => false
         ]);
 
         return back()->with('success', 'Support ticket submitted to support help desk.');
@@ -655,6 +700,14 @@ class PortalController extends Controller
                 'budget' => $request->budget,
                 'description' => $request->description,
             ]
+        ]);
+
+        \App\Models\UserNotification::create([
+            'user_id' => $request->user()->id,
+            'title' => 'Project Proposal Initiated',
+            'message' => 'Your project proposal "' . $request->title . '" has been received and submitted for validation.',
+            'type' => 'project',
+            'is_read' => false
         ]);
 
         return back()->with('success', 'Project request created successfully and submitted for admin validation.');

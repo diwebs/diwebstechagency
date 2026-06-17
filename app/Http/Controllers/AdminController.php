@@ -211,7 +211,44 @@ class AdminController extends Controller
         $invoices = Invoice::with(['project', 'client', 'milestone'])->orderBy('created_at', 'desc')->paginate(15);
         $totalRevenue = Invoice::where('status', 'paid')->sum('amount');
         $pendingRevenue = Invoice::where('status', 'pending')->sum('amount');
-        return view('admin.finance', compact('invoices', 'totalRevenue', 'pendingRevenue'));
+        $clients = User::where('role', 'client')->orderBy('name')->get();
+        $projects = Project::orderBy('title')->get();
+        return view('admin.finance', compact('invoices', 'totalRevenue', 'pendingRevenue', 'clients', 'projects'));
+    }
+
+    public function storeInvoice(Request $request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:users,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'invoice_number' => 'required|string|unique:invoices,invoice_number',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'amount' => 'required|numeric|min:0',
+            'due_date' => 'required|date',
+        ]);
+
+        Invoice::create([
+            'client_id' => $request->client_id,
+            'project_id' => $request->project_id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'amount' => $request->amount,
+            'invoice_number' => $request->invoice_number,
+            'status' => 'unpaid',
+            'due_date' => $request->due_date,
+        ]);
+
+        // Create User Notification
+        \App\Models\UserNotification::create([
+            'user_id' => $request->client_id,
+            'title' => 'Milestone Invoice Dispatched',
+            'message' => 'Invoice #' . $request->invoice_number . ' for ' . \App\Helpers\PaymentHelper::format($request->amount) . ' is outstanding. Due date: ' . date('M d, Y', strtotime($request->due_date)) . '.',
+            'type' => 'invoice',
+            'is_read' => false
+        ]);
+
+        return back()->with('success', 'Invoice generated and synchronized with client workspace successfully.');
     }
 
     public function updateInvoiceStatus(Request $request, $id)
@@ -490,7 +527,23 @@ class AdminController extends Controller
             'message' => 'required|string',
             'target_role' => 'required|string'
         ]);
-        // Simulate dispatcher
+
+        $query = \App\Models\User::query();
+        if ($request->target_role !== 'all') {
+            $query->where('role', $request->target_role);
+        }
+        $users = $query->get();
+
+        foreach ($users as $user) {
+            \App\Models\UserNotification::create([
+                'user_id' => $user->id,
+                'title' => $request->subject,
+                'message' => $request->message,
+                'type' => 'broadcast',
+                'is_read' => false
+            ]);
+        }
+
         return back()->with('success', 'System dispatch alert sent successfully to ' . $request->target_role . ' users.');
     }
 
@@ -900,7 +953,7 @@ class AdminController extends Controller
             ]);
 
             // Create initial invoice
-            Invoice::create([
+            $invoice = Invoice::create([
                 'project_id' => $project->id,
                 'milestone_id' => $milestone->id,
                 'client_id' => $project->client_id,
@@ -917,6 +970,23 @@ class AdminController extends Controller
                 'title' => 'Service Agreement: ' . $project->title,
                 'content' => "This Service Agreement is entered into between Diwebs Tech Agency and the client. Project title: {$project->title}. Budget: " . \App\Helpers\PaymentHelper::format($project->budget) . "\n\nScope Description:\n{$project->description}",
                 'status' => 'pending_signature'
+            ]);
+
+            // Create notifications for client
+            \App\Models\UserNotification::create([
+                'user_id' => $project->client_id,
+                'title' => 'Project Proposal Approved & Validated',
+                'message' => 'Your project proposal "' . $project->title . '" has been validated. The initial kickoff stage is set.',
+                'type' => 'project',
+                'is_read' => false
+            ]);
+
+            \App\Models\UserNotification::create([
+                'user_id' => $project->client_id,
+                'title' => 'Initial Kickoff Invoice Dispatched',
+                'message' => 'Invoice #' . $invoice->invoice_number . ' for ' . \App\Helpers\PaymentHelper::format($project->budget) . ' is outstanding.',
+                'type' => 'invoice',
+                'is_read' => false
             ]);
         });
 
@@ -1090,7 +1160,24 @@ class AdminController extends Controller
                 'revenue' => 0.00
             ]);
 
-            // Ensure owner role is candidate or updated if roles mapping allows
+            // Update user role to partner so they see the partner view
+            $enrollment->user->update(['role' => 'partner']);
+
+            \App\Models\UserNotification::create([
+                'user_id' => $enrollment->user_id,
+                'title' => 'Center Partner Application Approved',
+                'message' => 'Congratulations! Your CBT center partner request has been approved. Center code: ' . $code . '.',
+                'type' => 'broadcast',
+                'is_read' => false
+            ]);
+        } elseif ($request->status === 'rejected') {
+            \App\Models\UserNotification::create([
+                'user_id' => $enrollment->user_id,
+                'title' => 'Center Partner Application Declined',
+                'message' => 'Your CBT center partner request for "' . $enrollment->organization_name . '" was declined.',
+                'type' => 'broadcast',
+                'is_read' => false
+            ]);
         }
 
         return back()->with('success', 'CBT Center enrollment status updated to: ' . strtoupper($request->status));

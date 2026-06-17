@@ -134,4 +134,54 @@ class SecurityAuthTest extends TestCase
         $response->assertStatus(429);
         $response->assertJsonStructure(['message']);
     }
+
+    public function test_registration_for_all_roles_redirects_to_respective_dashboard()
+    {
+        \Illuminate\Support\Facades\Http::fake();
+
+        $rolesWithRedirects = [
+            'student' => '/academy/dashboard',
+            'instructor' => '/academy/dashboard',
+            'candidate' => '/cbt',
+            'partner' => '/cbt/partner/dashboard',
+            'client' => '/portal'
+        ];
+
+        foreach ($rolesWithRedirects as $role => $expectedRedirectUrl) {
+            $email = "new_{$role}@diwebstechagency.website";
+
+            // 1. Send OTP
+            $sendResponse = $this->postJson('/register/otp/send', ['email' => $email]);
+            $sendResponse->assertOk();
+
+            $otp = OtpCode::where('email_or_phone', $email)->first();
+            $this->assertNotNull($otp);
+
+            // 2. Verify OTP
+            $verifyResponse = $this->postJson('/register/otp/verify', [
+                'email' => $email,
+                'code' => $otp->code
+            ]);
+            $verifyResponse->assertOk();
+
+            // 3. Complete Registration
+            $response = $this->post('/register', [
+                'name' => "Test " . ucfirst($role),
+                'email' => $email,
+                'password' => 'SecurePassword123!',
+                'password_confirmation' => 'SecurePassword123!',
+                'role' => $role,
+                'country' => 'Nigeria'
+            ]);
+
+            // Assert redirect to the correct role dashboard
+            $response->assertRedirect($expectedRedirectUrl);
+
+            // Follow redirect and assert 200 OK
+            $this->get($expectedRedirectUrl)->assertStatus(200);
+
+            // Logout user for next iteration
+            $this->post('/logout');
+        }
+    }
 }

@@ -191,4 +191,74 @@ class AdminNotificationsTest extends TestCase
         $notification2->refresh();
         $this->assertTrue($notification2->is_read);
     }
+
+    public function test_user_notifications_lifecycle(): void
+    {
+        // 1. Create a user notification for the client
+        $notif = \App\Models\UserNotification::create([
+            'user_id' => $this->client->id,
+            'title' => 'Test Invoice Dispatched',
+            'message' => 'Your invoice #INV-001 has been dispatched.',
+            'type' => 'invoice',
+            'is_read' => false
+        ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id' => $notif->id,
+            'is_read' => false
+        ]);
+
+        // 2. Client visits dashboard, notifications are marked as read
+        $response = $this->actingAs($this->client)->get(route('portal.dashboard'));
+        $response->assertStatus(200);
+        
+        $notif->refresh();
+        $this->assertTrue($notif->is_read);
+
+        // 3. CBT notification feed displays and marks read
+        $cbtCandidate = User::create([
+            'name' => 'CBT Candidate',
+            'email' => 'cbt@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'candidate',
+            'status' => 'active'
+        ]);
+
+        $cbtNotif = \App\Models\UserNotification::create([
+            'user_id' => $cbtCandidate->id,
+            'title' => 'CBT Warning Issued',
+            'message' => 'Do not look away from screen.',
+            'type' => 'warning',
+            'is_read' => false
+        ]);
+
+        $response = $this->actingAs($cbtCandidate)->get(route('cbt.notifications'));
+        $response->assertStatus(200);
+
+        $cbtNotif->refresh();
+        $this->assertTrue($cbtNotif->is_read);
+
+        // 4. Academy notification feed displays and marks read
+        $student = User::create([
+            'name' => 'Academy Student',
+            'email' => 'student@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'student',
+            'status' => 'active'
+        ]);
+
+        $academyNotif = \App\Models\UserNotification::create([
+            'user_id' => $student->id,
+            'title' => 'Academy Course Completed',
+            'message' => 'Congrats on completing git bootcamp.',
+            'type' => 'academy',
+            'is_read' => false
+        ]);
+
+        $response = $this->actingAs($student)->get(route('academy.notifications'));
+        $response->assertStatus(200);
+
+        $academyNotif->refresh();
+        $this->assertTrue($academyNotif->is_read);
+    }
 }

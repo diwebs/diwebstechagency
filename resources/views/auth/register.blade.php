@@ -3,6 +3,21 @@
 @section('title', 'Secure Registration - Diwebs Digital Ecosystem')
 
 @section('content')
+@php
+    $sessionEmail = session('validated_register_email');
+    $oldEmail = old('email');
+    $emailVerified = !empty($sessionEmail) && strtolower(trim($sessionEmail)) === strtolower(trim($oldEmail));
+    $initialStep = 1;
+    if ($errors->any()) {
+        if ($emailVerified) {
+            $initialStep = 5; // Skip to step 5 (Final Review) since email is already verified
+        } else {
+            $initialStep = 2; // Go to step 2 to correct personal info
+        }
+    }
+    $hasOldInput = old('_token') !== null;
+    $enable2faDefault = $hasOldInput ? (old('enable_2fa') ? 'true' : 'false') : 'true';
+@endphp
 <div x-data="registerForm()" class="mx-auto max-w-xl px-4 py-8">
     <!-- Progress Indicator Tracker -->
     <div class="mb-8 relative">
@@ -76,11 +91,30 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="phone" class="block text-xs font-semibold text-brand-cyan uppercase">Phone Number</label>
-                        <input type="text" name="phone" id="phone" x-model="phone" placeholder="+234..." class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                        <input type="text" name="phone" id="phone" x-model="phone" @input="updateCountryFromPhone()" placeholder="+234..." class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
                     </div>
                     <div>
                         <label for="country" class="block text-xs font-semibold text-brand-cyan uppercase">Country</label>
-                        <input type="text" name="country" id="country" x-model="country" class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                        <select name="country" id="country" x-model="country" @change="updatePhoneCountryCode()" class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                            <option value="Nigeria" class="bg-[#1A1D21] text-brand-white">Nigeria</option>
+                            <option value="United States" class="bg-[#1A1D21] text-brand-white">United States</option>
+                            <option value="United Kingdom" class="bg-[#1A1D21] text-brand-white">United Kingdom</option>
+                            <option value="Canada" class="bg-[#1A1D21] text-brand-white">Canada</option>
+                            <option value="Ghana" class="bg-[#1A1D21] text-brand-white">Ghana</option>
+                            <option value="Kenya" class="bg-[#1A1D21] text-brand-white">Kenya</option>
+                            <option value="South Africa" class="bg-[#1A1D21] text-brand-white">South Africa</option>
+                            <option value="Germany" class="bg-[#1A1D21] text-brand-white">Germany</option>
+                            <option value="France" class="bg-[#1A1D21] text-brand-white">France</option>
+                            <option value="India" class="bg-[#1A1D21] text-brand-white">India</option>
+                            <option value="United Arab Emirates" class="bg-[#1A1D21] text-brand-white">United Arab Emirates</option>
+                            <option value="Australia" class="bg-[#1A1D21] text-brand-white">Australia</option>
+                            <option value="Saudi Arabia" class="bg-[#1A1D21] text-brand-white">Saudi Arabia</option>
+                            <option value="Egypt" class="bg-[#1A1D21] text-brand-white">Egypt</option>
+                            <option value="Rwanda" class="bg-[#1A1D21] text-brand-white">Rwanda</option>
+                            <option value="China" class="bg-[#1A1D21] text-brand-white">China</option>
+                            <option value="Japan" class="bg-[#1A1D21] text-brand-white">Japan</option>
+                            <option value="Brazil" class="bg-[#1A1D21] text-brand-white">Brazil</option>
+                        </select>
                     </div>
                 </div>
 
@@ -206,17 +240,72 @@
 <script>
     function registerForm() {
         return {
-            step: 1,
-            role: new URLSearchParams(window.location.search).get('ref') ? 'client' : 'student',
-            name: '',
-            email: '',
-            phone: '',
-            country: 'Nigeria',
+            step: {{ $initialStep }},
+            role: '{{ old('role') }}' || (new URLSearchParams(window.location.search).get('ref') ? 'client' : 'student'),
+            name: '{{ old('name') }}',
+            email: '{{ old('email') }}',
+            phone: '{{ old('phone') ?? '+234' }}',
+            country: '{{ old('country') ?? 'Nigeria' }}',
+            countryDialCodes: {
+                'Nigeria': '+234',
+                'United States': '+1',
+                'United Kingdom': '+44',
+                'Canada': '+1',
+                'Ghana': '+233',
+                'Kenya': '+254',
+                'South Africa': '+27',
+                'Germany': '+49',
+                'France': '+33',
+                'India': '+91',
+                'United Arab Emirates': '+971',
+                'Australia': '+61',
+                'Saudi Arabia': '+966',
+                'Egypt': '+20',
+                'Rwanda': '+250',
+                'China': '+86',
+                'Japan': '+81',
+                'Brazil': '+55'
+            },
+
+            updatePhoneCountryCode() {
+                const dialCode = this.countryDialCodes[this.country];
+                if (dialCode) {
+                    if (!this.phone) {
+                        this.phone = dialCode;
+                    } else {
+                        const match = this.phone.match(/^\+(\d+)/);
+                        if (match) {
+                            const existingDial = match[0];
+                            this.phone = dialCode + this.phone.slice(existingDial.length);
+                        } else {
+                            this.phone = dialCode + this.phone;
+                        }
+                    }
+                }
+            },
+
+            updateCountryFromPhone() {
+                if (this.phone && this.phone.startsWith('+')) {
+                    let bestMatch = null;
+                    let longestLength = 0;
+                    for (const [country, code] of Object.entries(this.countryDialCodes)) {
+                        if (this.phone.startsWith(code)) {
+                            if (code.length > longestLength) {
+                                longestLength = code.length;
+                                bestMatch = country;
+                            }
+                        }
+                    }
+                    if (bestMatch) {
+                        this.country = bestMatch;
+                    }
+                }
+            },
             password: '',
             password_confirmation: '',
-            referral_code: new URLSearchParams(window.location.search).get('ref') || '',
+            referral_code: '{{ old('referral_code') }}' || (new URLSearchParams(window.location.search).get('ref') || ''),
             verification_code: '',
-            enable_2fa: true,
+            enable_2fa: {{ $enable2faDefault }},
             passkey_enroll: false,
             passwordStrength: 0,
             strengthText: 'Weak',
@@ -226,7 +315,7 @@
             resendCooldown: 0,
             otpTimerId: null,
             cooldownTimerId: null,
-            errorMessage: '',
+            errorMessage: '{{ $errors->first() }}',
             errorShake: false,
 
             roleOptions: [

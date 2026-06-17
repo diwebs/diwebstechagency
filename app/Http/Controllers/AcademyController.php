@@ -266,7 +266,16 @@ class AcademyController extends Controller
 
     public function notifications(Request $request)
     {
-        return view('academy.notifications');
+        $user = $request->user();
+        $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        \App\Models\UserNotification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return view('academy.notifications', compact('notifications'));
     }
 
     public function settings(Request $request)
@@ -370,12 +379,22 @@ class AcademyController extends Controller
         $course = Course::findOrFail($courseId);
         $user = $request->user();
 
-        Enrollment::firstOrCreate([
+        $enrolled = Enrollment::firstOrCreate([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ], [
             'progress' => 0
         ]);
+
+        if ($enrolled->wasRecentlyCreated) {
+            \App\Models\UserNotification::create([
+                'user_id' => $user->id,
+                'title' => 'Course Enrollment Success',
+                'message' => 'You successfully enrolled in "' . $course->title . '". Start learning today!',
+                'type' => 'course',
+                'is_read' => false
+            ]);
+        }
 
         return redirect()->route('academy.course', $course->slug)->with('success', 'Enrolled successfully!');
     }

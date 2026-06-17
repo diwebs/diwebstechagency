@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Invoice extends Model
 {
     protected $fillable = [
-        'project_id', 'milestone_id', 'client_id', 'amount', 'invoice_number', 'status', 'due_date', 'paid_at'
+        'project_id', 'milestone_id', 'client_id', 'title', 'description', 'amount', 'invoice_number', 'status', 'due_date', 'paid_at'
     ];
 
     protected $casts = [
