@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Schema::defaultStringLength(191);
+
         if (config('cache.default') === 'redis' || config('queue.default') === 'redis' || config('session.driver') === 'redis') {
             try {
                 \Illuminate\Support\Facades\Redis::connection()->ping();

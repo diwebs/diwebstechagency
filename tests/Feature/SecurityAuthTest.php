@@ -14,6 +14,8 @@ class SecurityAuthTest extends TestCase
 
     public function test_register_password_complexity_checks()
     {
+        session(['validated_register_email' => 'test@diwebstechagency.website']);
+
         // 1. Weak password registration should fail standard validations if checked
         // Min length 12
         $response = $this->post('/register', [
@@ -183,5 +185,66 @@ class SecurityAuthTest extends TestCase
             // Logout user for next iteration
             $this->post('/logout');
         }
+    }
+
+    public function test_admin_can_change_users_password(): void
+    {
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@diwebstechagency.website',
+            'password' => bcrypt('SecurePassword123!'),
+            'role' => 'super_admin',
+            'status' => 'active'
+        ]);
+
+        $student = User::create([
+            'name' => 'John Doe',
+            'email' => 'john@diwebstechagency.website',
+            'password' => bcrypt('OldPassword123!'),
+            'role' => 'student',
+            'status' => 'active'
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.users.change-password', $student->id), [
+            'password' => 'NewSecurePassword123!',
+            'password_confirmation' => 'NewSecurePassword123!'
+        ]);
+
+        $response->assertStatus(302);
+        $student->refresh();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewSecurePassword123!', $student->password));
+    }
+
+    public function test_admin_can_create_cbt_center(): void
+    {
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@diwebstechagency.website',
+            'password' => bcrypt('SecurePassword123!'),
+            'role' => 'super_admin',
+            'status' => 'active'
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.centers.store'), [
+            'name' => 'Abuja Central CBT',
+            'code' => 'DTH-ABJ-01',
+            'city' => 'Abuja',
+            'address' => '12 Constitution Ave, Garki',
+            'capacity' => 120,
+            'contact_phone' => '+2349012345678',
+            'contact_email' => 'garki@diwebstech.com',
+            'center_type' => 'jamb',
+            'power_backup' => 'generator'
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('cbt_centers', [
+            'name' => 'Abuja Central CBT',
+            'code' => 'DTH-ABJ-01',
+            'city' => 'Abuja',
+            'capacity' => 120,
+            'center_type' => 'jamb',
+            'power_backup' => 'generator'
+        ]);
     }
 }

@@ -43,7 +43,7 @@
                         @endphp
                         
                         <div 
-                            @click="selectedDevice = {{ json_encode($device) }}"
+                            @click='selectedDevice = @json($device)'
                             :class="selectedDevice && selectedDevice.id === {{ $device->id }} ? 'ring-2 ring-brand-cyan border-brand-cyan' : ''"
                             class="cursor-pointer border rounded-xl p-3 text-center transition-all select-none hover:scale-105 hover:bg-brand-teal/5 {{ $statusColor }}"
                         >

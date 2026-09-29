@@ -27,9 +27,14 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function showResetRequest()
+    public function showResetRequest(Request $request)
     {
-        return view('auth.login'); // Displays reset request inside glassmorphic login template
+        $step = $request->get('step', 'request');
+        $email = $request->get('email', '');
+        return view('auth.login', [
+            'initialMode' => $step === 'verify' ? 'forgot_reset' : 'forgot_request',
+            'email' => $email
+        ]);
     }
 
     public function sendResetLink(Request $request)
@@ -45,6 +50,7 @@ class AuthController extends Controller
             logger("Password reset code for {$request->email}: {$code}");
 
             // Send Reset OTP via Mail
+            $mailError = null;
             try {
                 $toEmail = $request->email;
                 \Illuminate\Support\Facades\Mail::html(
@@ -63,19 +69,116 @@ class AuthController extends Controller
                 );
             } catch (\Exception $e) {
                 logger()->error("Failed to send password reset OTP email: " . $e->getMessage());
+                $mailError = $e->getMessage();
+            }
+
+            if ($mailError) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'Failed to send recovery email. SMTP Mailer Error: ' . $mailError . '. Please contact the administrator.'
+                    ], 500);
+                }
+                return back()->withInput()->withErrors(['email' => 'Failed to send recovery email: ' . $mailError]);
             }
         }
-        return back()->with('success', 'Reset link instructions dispatched to your email.');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Verification code dispatched to your email.',
+                'email' => $request->email
+            ]);
+        }
+
+        return redirect()->route('password.request', ['email' => $request->email, 'step' => 'verify'])->with('success', 'Reset link instructions dispatched to your email.');
     }
+
 
     public function showResetForm($token)
     {
-        return view('auth.login');
+        return view('auth.login', [
+            'initialMode' => 'forgot_reset',
+            'email' => '',
+            'token' => $token
+        ]);
     }
 
     public function resetPassword(Request $request)
     {
-        return back()->with('success', 'Password reset successfully.');
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+        if (!$user) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Invalid email address.'], 422);
+            }
+            return back()->withInput()->withErrors(['email' => 'Invalid email address.']);
+        }
+
+        // Check the OTP code
+        $otp = OtpCode::where('email_or_phone', $validated['email'])
+            ->where('type', 'password_reset_otp')
+            ->first();
+
+        if (!$otp) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'No active password recovery session found.'], 422);
+            }
+            return back()->withInput()->withErrors(['code' => 'No active password recovery session found.']);
+        }
+
+        if ($otp->isExpired()) {
+            $otp->delete();
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'The verification code has expired.'], 422);
+            }
+            return back()->withInput()->withErrors(['code' => 'The verification code has expired.']);
+        }
+
+        if ($otp->retries >= 5) {
+            $otp->delete();
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Max verification attempts exceeded.'], 422);
+            }
+            return back()->withInput()->withErrors(['code' => 'Max verification attempts exceeded.']);
+        }
+
+        if ($otp->code !== $validated['code']) {
+            $otp->increment('retries');
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Invalid verification code.'], 422);
+            }
+            return back()->withInput()->withErrors(['code' => 'Invalid verification code.']);
+        }
+
+        // Breach check
+        if ($this->isPasswordBreached($validated['password'])) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'This password has been flagged in global data breaches. Please choose a different password.'], 422);
+            }
+            return back()->withInput()->withErrors(['password' => 'This password has been flagged in global data breaches. Please choose a different password.']);
+        }
+
+        // Success! Reset password
+        $user->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        $otp->delete();
+
+        // Write Audit Log
+        $this->logAuthEvent($user->id, 'password_reset_success', ['method' => 'otp']);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Password reset successfully. You can now log in.'
+            ]);
+        }
+
+        return redirect()->route('login')->with('success', 'Password reset successfully.');
     }
 
     public function login(Request $request)
@@ -166,7 +269,13 @@ class AuthController extends Controller
 
             // If it's a suspicious device but they don't have TOTP configured, dispatch a security Email OTP
             if ($isSuspicious && !$user->two_factor_confirmed_at) {
-                $this->sendSecurityEmailOtp($user);
+                try {
+                    $this->sendSecurityEmailOtp($user);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'message' => 'Failed to send security verification email. SMTP Mailer Error: ' . $e->getMessage() . '. Please contact the administrator.'
+                    ], 500);
+                }
             }
 
             return response()->json([
@@ -174,6 +283,7 @@ class AuthController extends Controller
                 'is_suspicious' => $isSuspicious,
                 'message' => $isSuspicious ? 'New device detected. Step-up verification code sent to email.' : 'Two-factor authentication code required.'
             ]);
+
         }
 
         // 4. Log User In directly (trusted device)
@@ -313,6 +423,7 @@ class AuthController extends Controller
         logger("Diwebs Onboarding OTP for {$request->email}: {$code}");
 
         // Send Onboarding OTP via Mail
+        $mailError = null;
         try {
             $toEmail = $request->email;
             \Illuminate\Support\Facades\Mail::html(
@@ -331,9 +442,17 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             logger()->error("Failed to send registration OTP email: " . $e->getMessage());
+            $mailError = $e->getMessage();
+        }
+
+        if ($mailError) {
+            return response()->json([
+                'message' => 'Failed to send verification email. SMTP Mailer Error: ' . $mailError . '. Please contact the administrator.'
+            ], 500);
         }
 
         return response()->json(['message' => 'Verification code sent.']);
+
     }
 
     public function verifyRegistrationOtp(Request $request)
@@ -372,8 +491,9 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'company_name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:12',
+            'password' => 'required|string|min:8',
             'role' => 'required|string|in:student,client,candidate,partner,instructor',
             'referral_code' => 'nullable|string|exists:users,referral_code',
             'phone' => 'nullable|string|max:50',
@@ -400,6 +520,7 @@ class AuthController extends Controller
         // Creates user using Argon2id driver
         $user = User::create([
             'name' => $validated['name'],
+            'company_name' => $validated['company_name'] ?? null,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
@@ -417,6 +538,19 @@ class AuthController extends Controller
                 'status' => 'pending'
             ]);
         }
+
+        \App\Models\AdminNotification::create([
+            'type' => 'user_register',
+            'title' => 'New User Account Created: ' . $user->name . ' (' . ucfirst($user->role) . ')',
+            'details' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'phone' => $user->phone ?? null,
+                'country' => $user->country ?? null,
+                'company_name' => $user->company_name ?? null
+            ]
+        ]);
 
         // Clean validation flag
         session()->forget('validated_register_email');
@@ -515,77 +649,341 @@ class AuthController extends Controller
         return redirect('/');
     }
 
-    // WebAuthn Passkeys login endpoints (Placeholders simulating OS cryptographic signature verification)
+    // ============================================================
+    // WebAuthn / Passkey - Login (Assertion) Flow
+    // ============================================================
+
     public function passkeyLoginChallenge(Request $request)
     {
         $request->validate(['email' => 'required|email']);
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'No account matches this email.'], 404);
+            return response()->json(['message' => 'No account found with that email address.'], 404);
         }
 
-        $challenge = Str::random(32);
-        session(['webauthn_login_challenge' => $challenge, 'webauthn_login_user_id' => $user->id]);
+        $passkeys = UserPasskey::where('user_id', $user->id)->get();
+        if ($passkeys->isEmpty()) {
+            return response()->json([
+                'message' => 'No passkey registered for this account. Please set one up in your account settings after logging in with your password.'
+            ], 422);
+        }
+
+        // Generate a cryptographically secure 32-byte challenge
+        $challengeBytes = random_bytes(32);
+        $challenge = rtrim(strtr(base64_encode($challengeBytes), '+/', '-_'), '=');
+
+        session([
+            'webauthn_login_challenge'  => $challenge,
+            'webauthn_login_user_id'    => $user->id,
+            'webauthn_challenge_expiry' => time() + 300, // 5 minutes
+        ]);
+
+        $allowCredentials = $passkeys->map(function ($key) {
+            return [
+                'type'       => 'public-key',
+                'id'         => $key->credential_id,
+                'transports' => ['internal', 'hybrid'],
+            ];
+        })->values();
 
         return response()->json([
-            'challenge' => $challenge,
-            'rpId' => request()->getHost(),
-            'allowCredentials' => UserPasskey::where('user_id', $user->id)->get()->map(function ($key) {
-                return ['type' => 'public-key', 'id' => $key->credential_id];
-            })
+            'challenge'        => $challenge,
+            'rpId'             => $request->getHost(),
+            'timeout'          => 60000,
+            'userVerification' => 'required',
+            'allowCredentials' => $allowCredentials,
         ]);
     }
 
     public function passkeyVerify(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'assertion' => 'required|string'
+            'credential_id'        => 'required|string',
+            'authenticator_data'   => 'required|string',
+            'client_data_json'     => 'required|string',
+            'signature'            => 'required|string',
         ]);
 
-        $userId = session('webauthn_login_user_id');
-        if (!$userId) {
-            return response()->json(['message' => 'Challenge verification session expired.'], 422);
+        // 1. Session / timing checks
+        $storedChallenge = session('webauthn_login_challenge');
+        $userId          = session('webauthn_login_user_id');
+        $expiry          = session('webauthn_challenge_expiry');
+
+        if (!$storedChallenge || !$userId) {
+            return response()->json(['message' => 'Session expired. Please try again.'], 422);
+        }
+        if (time() > $expiry) {
+            session()->forget(['webauthn_login_challenge', 'webauthn_login_user_id', 'webauthn_challenge_expiry']);
+            return response()->json(['message' => 'Authentication timed out. Please try again.'], 422);
         }
 
-        $user = User::findOrFail($userId);
-        
-        // Simulating assertion crypt verification mapping matching user registered credentials
-        $passkey = UserPasskey::where('user_id', $user->id)->first();
+        // 2. Load passkey by credential_id
+        $credentialId = $request->credential_id;
+        $passkey = UserPasskey::where('credential_id', $credentialId)
+            ->where('user_id', $userId)
+            ->first();
+
         if (!$passkey) {
-            return response()->json(['message' => 'No registered passkeys found.'], 422);
+            return response()->json(['message' => 'Passkey not recognised. Please log in with your password.'], 422);
         }
 
-        // Increment sign counter
-        $passkey->increment('sign_count');
+        // 3. Decode clientDataJSON and verify challenge + origin + type
+        $clientDataRaw = base64_decode(strtr($request->client_data_json, '-_', '+/'));
+        $clientData    = json_decode($clientDataRaw, true);
 
+        if (!$clientData) {
+            return response()->json(['message' => 'Invalid authentication data received from your device.'], 422);
+        }
+        if (($clientData['type'] ?? '') !== 'webauthn.get') {
+            return response()->json(['message' => 'Authentication type mismatch.'], 422);
+        }
+
+        // Decode the challenge from clientDataJSON (URL-safe base64)
+        $receivedChallenge = rtrim(strtr($clientData['challenge'] ?? '', '+/', '-_'), '=');
+        if (!hash_equals($storedChallenge, $receivedChallenge)) {
+            return response()->json(['message' => 'Challenge verification failed. Please try again.'], 422);
+        }
+
+        // Verify origin matches this server
+        $expectedOrigin = $request->getSchemeAndHttpHost();
+        if (($clientData['origin'] ?? '') !== $expectedOrigin) {
+            return response()->json(['message' => 'Origin mismatch — authentication rejected.'], 422);
+        }
+
+        // 4. Decode and inspect authenticatorData
+        $authDataRaw = base64_decode(strtr($request->authenticator_data, '-_', '+/'));
+        if (strlen($authDataRaw) < 37) {
+            return response()->json(['message' => 'Authenticator data too short.'], 422);
+        }
+
+        // Bytes 0-31: rpIdHash — verify it matches sha256(rpId)
+        $rpIdHash        = substr($authDataRaw, 0, 32);
+        $expectedRpIdHash = hash('sha256', $request->getHost(), true);
+        if (!hash_equals($expectedRpIdHash, $rpIdHash)) {
+            return response()->json(['message' => 'Relying party ID mismatch — authentication rejected.'], 422);
+        }
+
+        // Byte 32: flags — bit 0 = User Present (UP), bit 2 = User Verified (UV)
+        $flags = ord($authDataRaw[32]);
+        $userPresent  = ($flags & 0x01) !== 0;
+        $userVerified = ($flags & 0x04) !== 0;
+
+        if (!$userPresent || !$userVerified) {
+            return response()->json(['message' => 'Device verification was not completed. Please use your PIN or biometric.'], 422);
+        }
+
+        // Bytes 33-36: signCount (big-endian uint32)
+        $signCountBytes = substr($authDataRaw, 33, 4);
+        $signCount = unpack('N', $signCountBytes)[1];
+
+        // Replay-attack prevention: sign count must be greater than stored
+        if ($passkey->sign_count > 0 && $signCount <= $passkey->sign_count) {
+            $this->logAuthEvent($userId, 'passkey_replay_attack_detected', [
+                'credential_id' => $credentialId,
+                'stored_count'  => $passkey->sign_count,
+                'received_count'=> $signCount,
+            ]);
+            return response()->json(['message' => 'Replay attack detected. This authentication session has been rejected.'], 422);
+        }
+
+        // 5. Verify ECDSA P-256 signature
+        $signatureRaw   = base64_decode(strtr($request->signature, '-_', '+/'));
+        $clientDataHash = hash('sha256', $clientDataRaw, true);
+        $verifyData     = $authDataRaw . $clientDataHash;
+
+        // Parse stored public key (COSE key or PEM)
+        $publicKeyPem = $passkey->public_key;
+        $pubKey = openssl_pkey_get_public($publicKeyPem);
+
+        if (!$pubKey) {
+            return response()->json(['message' => 'Could not load stored passkey credential. Please re-register your passkey.'], 500);
+        }
+
+        $verified = openssl_verify($verifyData, $signatureRaw, $pubKey, OPENSSL_ALGO_SHA256);
+
+        if ($verified !== 1) {
+            $this->logAuthEvent($userId, 'passkey_signature_invalid', ['credential_id' => $credentialId]);
+            return response()->json(['message' => 'Passkey signature is invalid. Authentication denied.'], 422);
+        }
+
+        // 6. Update sign counter and clear challenge session
+        $passkey->update(['sign_count' => $signCount]);
+        session()->forget(['webauthn_login_challenge', 'webauthn_login_user_id', 'webauthn_challenge_expiry']);
+
+        // 7. Log the user in
+        $user = User::findOrFail($userId);
         Auth::login($user);
-        request()->session()->regenerate();
-        session(['last_activity_time' => now()->timestamp]);
-        session(['session_created_at' => now()->timestamp]);
+        $request->session()->regenerate();
+        session(['last_activity_time'  => now()->timestamp]);
+        session(['session_created_at'  => now()->timestamp]);
 
         $deviceUuid = $request->cookie('diwebs_device_uuid') ?? Str::uuid()->toString();
-        $userAgent = $request->userAgent();
+        $userAgent  = $request->userAgent();
 
         UserDevice::updateOrCreate(
             ['user_id' => $user->id, 'device_uuid' => $deviceUuid],
             [
-                'browser' => $this->parseBrowser($userAgent),
-                'os' => $this->parseOS($userAgent),
-                'ip_address' => $request->ip(),
-                'location' => 'Nigeria',
-                'is_trusted' => true,
-                'last_active_at' => now()
+                'browser'       => $this->parseBrowser($userAgent),
+                'os'            => $this->parseOS($userAgent),
+                'ip_address'    => $request->ip(),
+                'location'      => $user->country ?? 'Unknown',
+                'is_trusted'    => true,
+                'last_active_at'=> now(),
             ]
         );
 
-        $this->logAuthEvent($user->id, 'login_success_passkey', ['device_uuid' => $deviceUuid]);
+        $this->logAuthEvent($user->id, 'login_success_passkey', [
+            'device_uuid'   => $deviceUuid,
+            'credential_id' => $credentialId,
+        ]);
 
         return response()->json([
-            'redirect' => $this->getRedirectPath($user),
-            'device_uuid' => $deviceUuid
+            'redirect'    => $this->getRedirectPath($user),
+            'device_uuid' => $deviceUuid,
         ])->cookie('diwebs_device_uuid', $deviceUuid, 43200);
+    }
+
+    // ============================================================
+    // WebAuthn / Passkey - Registration (Attestation) Flow
+    // ============================================================
+
+    public function passkeyRegisterChallenge(Request $request)
+    {
+        $user = Auth::user();
+
+        $challengeBytes = random_bytes(32);
+        $challenge = rtrim(strtr(base64_encode($challengeBytes), '+/', '-_'), '=');
+
+        session([
+            'webauthn_reg_challenge'  => $challenge,
+            'webauthn_reg_user_id'    => $user->id,
+            'webauthn_reg_expiry'     => time() + 300,
+        ]);
+
+        // Exclude already-registered credentials so device won't prompt twice
+        $excludeCredentials = UserPasskey::where('user_id', $user->id)->get()->map(function ($pk) {
+            return ['type' => 'public-key', 'id' => $pk->credential_id];
+        })->values();
+
+        return response()->json([
+            'challenge'           => $challenge,
+            'rp'                  => [
+                'name' => config('app.name', 'Diwebs Tech Agency'),
+                'id'   => $request->getHost(),
+            ],
+            'user' => [
+                'id'          => rtrim(strtr(base64_encode((string) $user->id), '+/', '-_'), '='),
+                'name'        => $user->email,
+                'displayName' => $user->name,
+            ],
+            'pubKeyCredParams'    => [
+                ['type' => 'public-key', 'alg' => -7],   // ES256 (ECDSA P-256)
+                ['type' => 'public-key', 'alg' => -257],  // RS256 (RSA)
+            ],
+            'timeout'             => 60000,
+            'attestation'         => 'none',
+            'authenticatorSelection' => [
+                'authenticatorAttachment' => 'platform',
+                'requireResidentKey'      => false,
+                'userVerification'        => 'required',
+            ],
+            'excludeCredentials'  => $excludeCredentials,
+        ]);
+    }
+
+    public function passkeyRegisterVerify(Request $request)
+    {
+        $request->validate([
+            'credential_id'        => 'required|string',
+            'attestation_object'   => 'required|string',
+            'client_data_json'     => 'required|string',
+            'public_key_spki'      => 'required|string',  // SPKI-encoded public key in base64url from client
+            'device_name'          => 'nullable|string|max:100',
+        ]);
+
+        $user           = Auth::user();
+        $storedChallenge = session('webauthn_reg_challenge');
+        $sessionUserId  = session('webauthn_reg_user_id');
+        $expiry         = session('webauthn_reg_expiry');
+
+        if (!$storedChallenge || $sessionUserId !== $user->id) {
+            return response()->json(['message' => 'Registration session expired. Please try again.'], 422);
+        }
+        if (time() > $expiry) {
+            session()->forget(['webauthn_reg_challenge', 'webauthn_reg_user_id', 'webauthn_reg_expiry']);
+            return response()->json(['message' => 'Registration timed out. Please try again.'], 422);
+        }
+
+        // Verify clientDataJSON
+        $clientDataRaw = base64_decode(strtr($request->client_data_json, '-_', '+/'));
+        $clientData    = json_decode($clientDataRaw, true);
+
+        if (!$clientData) {
+            return response()->json(['message' => 'Invalid registration data from device.'], 422);
+        }
+        if (($clientData['type'] ?? '') !== 'webauthn.create') {
+            return response()->json(['message' => 'Registration type mismatch.'], 422);
+        }
+
+        $receivedChallenge = rtrim(strtr($clientData['challenge'] ?? '', '+/', '-_'), '=');
+        if (!hash_equals($storedChallenge, $receivedChallenge)) {
+            return response()->json(['message' => 'Challenge verification failed.'], 422);
+        }
+
+        $expectedOrigin = $request->getSchemeAndHttpHost();
+        if (($clientData['origin'] ?? '') !== $expectedOrigin) {
+            return response()->json(['message' => 'Origin mismatch — registration rejected.'], 422);
+        }
+
+        // Convert SPKI public key bytes to PEM so OpenSSL can use it later for verification
+        $spkiBytes = base64_decode(strtr($request->public_key_spki, '-_', '+/'));
+        $pemPublicKey = "-----BEGIN PUBLIC KEY-----\n" .
+            chunk_split(base64_encode($spkiBytes), 64, "\n") .
+            "-----END PUBLIC KEY-----\n";
+
+        // Confirm it's a valid key before storing
+        if (!openssl_pkey_get_public($pemPublicKey)) {
+            return response()->json(['message' => 'Invalid public key received from device. Please try again.'], 422);
+        }
+
+        // Check if credential already registered
+        if (UserPasskey::where('credential_id', $request->credential_id)->exists()) {
+            return response()->json(['message' => 'This passkey is already registered on your account.'], 422);
+        }
+
+        // Store the passkey
+        $passkey = UserPasskey::create([
+            'user_id'       => $user->id,
+            'credential_id' => $request->credential_id,
+            'public_key'    => $pemPublicKey,
+            'sign_count'    => 0,
+            'name'          => $request->device_name ?? $this->parseOS($request->userAgent()) . ' ' . $this->parseBrowser($request->userAgent()),
+        ]);
+
+        session()->forget(['webauthn_reg_challenge', 'webauthn_reg_user_id', 'webauthn_reg_expiry']);
+
+        $this->logAuthEvent($user->id, 'passkey_registered', [
+            'credential_id' => $request->credential_id,
+            'device_name'   => $passkey->name,
+        ]);
+
+        return response()->json([
+            'message'     => 'Passkey registered successfully! You can now use your fingerprint or face to sign in.',
+            'passkey_id'  => $passkey->id,
+            'device_name' => $passkey->name,
+        ]);
+    }
+
+    public function passkeyDelete(Request $request, $passkeyId)
+    {
+        $user    = Auth::user();
+        $passkey = UserPasskey::where('id', $passkeyId)->where('user_id', $user->id)->firstOrFail();
+        $passkey->delete();
+
+        $this->logAuthEvent($user->id, 'passkey_deleted', ['passkey_id' => $passkeyId]);
+
+        return response()->json(['message' => 'Passkey removed from your account.']);
     }
 
     private function sendSecurityEmailOtp($user)
@@ -622,13 +1020,15 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             logger()->error("Failed to send security verification OTP email: " . $e->getMessage());
+            throw $e;
         }
     }
+
 
     private function isPasswordBreached($password)
     {
         // 1. Local list checks
-        $blocked = ['123456', 'password', 'qwerty', '123456789', 'password123', 'admin123', 'diwebs123'];
+        $blocked = ['123456', 'password', 'qwerty', '123456789', 'password123', 'admin123', 'diwebs123', 'weakpass'];
         if (in_array(Str::lower($password), $blocked)) {
             return true;
         }
@@ -738,6 +1138,14 @@ class AuthController extends Controller
 
     private function getRedirectPath($user)
     {
+        if (session()->has('session_expired_redirect_url')) {
+            $redirectUrl = session('session_expired_redirect_url');
+            session()->forget('session_expired_redirect_url');
+            if ($redirectUrl && !str_contains($redirectUrl, '/login') && !str_contains($redirectUrl, '/logout')) {
+                return $redirectUrl;
+            }
+        }
+
         switch ($user->role) {
             case 'super_admin':
                 return route('admin.dashboard');
@@ -754,4 +1162,5 @@ class AuthController extends Controller
                 return '/';
         }
     }
+
 }

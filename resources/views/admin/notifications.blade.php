@@ -32,14 +32,33 @@
         
         <!-- Left Column: System Alert Dispatcher -->
         <div class="lg:col-span-5 space-y-6">
+
+            <!-- ── Flash Messages ─────────────────────────────────────────── -->
+            @if(session('success'))
+            <div class="rounded-xl bg-emerald-950/40 border border-emerald-500/30 p-3 text-xs text-emerald-400 flex items-center gap-2">
+                <span>✓</span> {{ session('success') }}
+            </div>
+            @endif
+            @if(session('email_success'))
+            <div class="rounded-xl bg-blue-950/40 border border-blue-500/30 p-3 text-xs text-blue-300 flex items-center gap-2">
+                <span>✉️</span> {{ session('email_success') }}
+            </div>
+            @endif
+            @if(session('email_error'))
+            <div class="rounded-xl bg-rose-950/40 border border-rose-500/30 p-3 text-xs text-rose-400 flex items-center gap-2">
+                <span>✗</span> {{ session('email_error') }}
+            </div>
+            @endif
+
+            <!-- ── Broadcast Dispatcher ───────────────────────────────────── -->
             <div class="glass-card rounded-2xl p-6 border border-brand-teal/15">
                 <h3 class="text-sm font-semibold uppercase text-brand-cyan tracking-wider mb-5 border-b border-brand-teal/10 pb-3 flex items-center gap-2">
                     <span>⚡</span> Outbound Broadcast Dispatcher
                 </h3>
-                
+
                 <form action="{{ route('admin.notifications.send') }}" method="POST" class="space-y-5">
                     @csrf
-                    
+
                     <!-- Target Audience -->
                     <div>
                         <label class="block text-xs font-bold text-brand-white uppercase mb-2">Target Audience Group</label>
@@ -55,20 +74,20 @@
                     <!-- Subject -->
                     <div>
                         <label class="block text-xs font-bold text-brand-white uppercase mb-2">Announcement Subject</label>
-                        <input type="text" 
-                               name="subject" 
-                               required 
-                               placeholder="e.g. Server Maintenance or Syllabus Expansion Updates" 
+                        <input type="text"
+                               name="subject"
+                               required
+                               placeholder="e.g. Server Maintenance or Syllabus Expansion Updates"
                                class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
                     </div>
 
                     <!-- Message content -->
                     <div>
                         <label class="block text-xs font-bold text-brand-white uppercase mb-2">Announcement / Push Message Body</label>
-                        <textarea name="message" 
-                                  rows="6" 
-                                  required 
-                                  placeholder="Provide the notification message context. HTML text formatting tags are supported." 
+                        <textarea name="message"
+                                  rows="5"
+                                  required
+                                  placeholder="Provide the notification message context."
                                   class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 p-4 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all"></textarea>
                     </div>
 
@@ -79,7 +98,60 @@
                     </div>
                 </form>
             </div>
-            
+
+            <!-- ── Direct Client Email ────────────────────────────────────── -->
+            <div class="glass-card rounded-2xl p-6 border border-blue-500/20">
+                <h3 class="text-sm font-semibold uppercase text-blue-300 tracking-wider mb-5 border-b border-blue-500/10 pb-3 flex items-center gap-2">
+                    <span>✉️</span> Send Direct Email to Client
+                </h3>
+                <p class="text-[10px] text-brand-gray/70 mb-4 leading-relaxed">
+                    Compose and send a personal email directly to a registered user. The message is also saved as an in-app notification so the user sees it on their dashboard.
+                </p>
+
+                <form action="{{ route('admin.notifications.send-email') }}" method="POST" class="space-y-5">
+                    @csrf
+
+                    <!-- Recipient -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Recipient (User)</label>
+                        <select name="user_id" required
+                                class="w-full rounded-lg bg-brand-dark-secondary border border-blue-500/15 px-4 py-2.5 text-xs text-brand-white focus:border-blue-400/60 focus:outline-none transition-all">
+                            <option value="">— Select a user —</option>
+                            @foreach($allUsers as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }} &lt;{{ $u->email }}&gt; · {{ ucfirst($u->role) }}</option>
+                            @endforeach
+                        </select>
+                        @error('user_id')<p class="text-rose-400 text-[10px] mt-1">{{ $message }}</p>@enderror
+                    </div>
+
+                    <!-- Subject -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Email Subject</label>
+                        <input type="text" name="subject" required
+                               placeholder="e.g. Your project update is ready"
+                               value="{{ old('subject') }}"
+                               class="w-full rounded-lg bg-brand-dark-secondary border border-blue-500/15 px-4 py-2.5 text-xs text-brand-white focus:border-blue-400/60 focus:outline-none transition-all">
+                        @error('subject')<p class="text-rose-400 text-[10px] mt-1">{{ $message }}</p>@enderror
+                    </div>
+
+                    <!-- Message -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Email Body</label>
+                        <textarea name="message" rows="6" required
+                                  placeholder="Write your personal message to the client here..."
+                                  class="w-full rounded-lg bg-brand-dark-secondary border border-blue-500/15 p-4 text-xs text-brand-white focus:border-blue-400/60 focus:outline-none transition-all">{{ old('message') }}</textarea>
+                        @error('message')<p class="text-rose-400 text-[10px] mt-1">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div class="pt-3 border-t border-blue-500/10">
+                        <button type="submit"
+                                class="w-full rounded-lg bg-blue-600 hover:bg-blue-500 py-3 text-xs font-bold text-white shadow hover:opacity-90 transition-all cursor-pointer font-sans">
+                            ✉️ Send Email to Client
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <!-- Information Panel -->
             <div class="glass-card rounded-2xl p-6 border border-brand-teal/10 bg-brand-dark-secondary/10">
                 <h4 class="text-xs font-bold text-brand-cyan uppercase tracking-wider mb-2">System Telemetry Logs</h4>
@@ -96,6 +168,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Right Column: Inbound Form Submissions Feed -->
         <div class="lg:col-span-7 space-y-6">

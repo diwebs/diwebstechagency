@@ -31,13 +31,15 @@
             <h2 class="text-xs font-extrabold uppercase tracking-wider text-brand-cyan mb-1">Active Payment Gateway</h2>
             <p class="text-[11px] text-brand-gray mb-5">Select which payment processor will be used for all new transactions across the platform.</p>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="gateway-selector">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-3" id="gateway-selector">
                 @php
                     $gateways = [
                         ['id' => 'stripe',        'label' => 'Stripe',        'icon_img' => '/images/brand/stripe.svg'],
                         ['id' => 'paystack',      'label' => 'Paystack',      'icon_img' => '/images/brand/paystack.svg'],
                         ['id' => 'flutterwave',   'label' => 'Flutterwave',   'icon_img' => '/images/brand/flutterwave.svg'],
                         ['id' => 'paypal',        'label' => 'PayPal',        'icon_img' => '/images/brand/paypal.svg'],
+                        ['id' => 'razorpay',      'label' => 'Razorpay',      'icon_img' => '/images/brand/razorpay.svg'],
+                        ['id' => 'coinbase',      'label' => 'Coinbase',      'icon_img' => '/images/brand/coinbase.svg'],
                         ['id' => 'bank_transfer', 'label' => 'Bank Wire',     'icon_img' => '/images/brand/bank.svg'],
                         ['id' => 'crypto',        'label' => 'Crypto',        'icon_img' => '/images/brand/bitcoin.svg'],
                     ];
@@ -45,19 +47,19 @@
 
                 @foreach($gateways as $gw)
                     <label for="gw_{{ $gw['id'] }}"
-                           class="gateway-card relative flex flex-col items-center gap-2 rounded-xl border p-4 cursor-pointer transition-all
+                           class="gateway-card relative flex flex-col items-center justify-center gap-2.5 rounded-xl border p-3.5 cursor-pointer transition-all min-w-0 select-none
                                   {{ $paymentSettings['active_gateway'] === $gw['id']
                                      ? 'border-brand-cyan bg-brand-cyan/10 shadow-lg shadow-brand-cyan/10'
                                      : 'border-brand-teal/20 bg-brand-dark-secondary/40 hover:border-brand-teal/50' }}">
                         <input type="radio" name="active_gateway" id="gw_{{ $gw['id'] }}" value="{{ $gw['id'] }}"
                                {{ $paymentSettings['active_gateway'] === $gw['id'] ? 'checked' : '' }}
                                class="sr-only" />
-                        <div class="h-10 flex items-center justify-center">
-                            <img src="{{ $gw['icon_img'] }}" alt="{{ $gw['label'] }}" class="h-10 w-10 object-contain">
+                        <div class="h-10 w-10 flex items-center justify-center rounded-lg bg-brand-dark-secondary/80 border border-brand-teal/10 p-1.5 flex-shrink-0">
+                            <img src="{{ $gw['icon_img'] }}" alt="" class="h-full w-full object-contain">
                         </div>
-                        <span class="text-[11px] font-bold text-brand-white text-center leading-tight">{{ $gw['label'] }}</span>
+                        <span class="text-[11px] font-bold text-brand-white text-center truncate w-full leading-tight">{{ $gw['label'] }}</span>
                         @if($paymentSettings['active_gateway'] === $gw['id'])
-                            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-cyan"></span>
+                            <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-cyan ring-4 ring-brand-cyan/20"></span>
                         @endif
                     </label>
                 @endforeach
@@ -303,6 +305,76 @@
                             <option value="sandbox" {{ $paymentSettings['paypal_mode'] === 'sandbox' ? 'selected' : '' }}>🧪 Sandbox (Testing)</option>
                             <option value="live"    {{ $paymentSettings['paypal_mode'] === 'live'    ? 'selected' : '' }}>🚀 Live (Production)</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+
+            {{-- RAZORPAY --}}
+            <div class="glass-card rounded-2xl border border-brand-teal/15 overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-4 bg-slate-900/40 border-b border-brand-teal/10">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">💳</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-brand-white">Razorpay</h3>
+                            <p class="text-[10px] text-brand-gray">Automatic credit card, UPI, netbanking, and wallet payments. Popular in India and globally.</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="razorpay_enabled" value="1" class="sr-only peer"
+                               {{ $paymentSettings['razorpay_enabled'] ? 'checked' : '' }}>
+                        <div class="w-10 h-5 bg-brand-dark-secondary border border-brand-teal/30 rounded-full peer peer-checked:bg-brand-cyan peer-checked:border-brand-cyan after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                        <span class="ml-2 text-[10px] font-bold text-brand-gray peer-checked:text-brand-cyan">Enabled</span>
+                    </label>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-gray mb-1.5">Key ID</label>
+                        <input type="text" name="razorpay_key_id"
+                               value="{{ old('razorpay_key_id', $paymentSettings['razorpay_key_id']) }}"
+                               class="w-full rounded-lg border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-xs text-brand-white placeholder-brand-gray/40 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan transition-colors font-mono"
+                               placeholder="rzp_live_..." />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-gray mb-1.5">Key Secret</label>
+                        <input type="password" name="razorpay_key_secret"
+                               value="{{ old('razorpay_key_secret', $paymentSettings['razorpay_key_secret']) }}"
+                               class="w-full rounded-lg border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-xs text-brand-white placeholder-brand-gray/40 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan transition-colors font-mono"
+                               placeholder="Secret..." />
+                    </div>
+                </div>
+            </div>
+
+            {{-- COINBASE COMMERCE --}}
+            <div class="glass-card rounded-2xl border border-brand-teal/15 overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-4 bg-blue-900/10 border-b border-brand-teal/10">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🪙</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-brand-white">Coinbase Commerce</h3>
+                            <p class="text-[10px] text-brand-gray">Automatic on-chain cryptocurrency payments. Supports Bitcoin, Ethereum, Litecoin, USDC, etc.</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="coinbase_enabled" value="1" class="sr-only peer"
+                               {{ $paymentSettings['coinbase_enabled'] ? 'checked' : '' }}>
+                        <div class="w-10 h-5 bg-brand-dark-secondary border border-brand-teal/30 rounded-full peer peer-checked:bg-brand-cyan peer-checked:border-brand-cyan after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                        <span class="ml-2 text-[10px] font-bold text-brand-gray peer-checked:text-brand-cyan">Enabled</span>
+                    </label>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-gray mb-1.5">API Key</label>
+                        <input type="text" name="coinbase_api_key"
+                               value="{{ old('coinbase_api_key', $paymentSettings['coinbase_api_key']) }}"
+                               class="w-full rounded-lg border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-xs text-brand-white placeholder-brand-gray/40 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan transition-colors font-mono"
+                               placeholder="API Key..." />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-gray mb-1.5">Shared Webhook Secret</label>
+                        <input type="password" name="coinbase_webhook_secret"
+                               value="{{ old('coinbase_webhook_secret', $paymentSettings['coinbase_webhook_secret']) }}"
+                               class="w-full rounded-lg border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-xs text-brand-white placeholder-brand-gray/40 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan transition-colors font-mono"
+                               placeholder="Webhook Secret..." />
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_confirmed_at', 'referral_code', 'referred_by', 'phone', 'country'])]
+#[Fillable(['name', 'company_name', 'email', 'password', 'role', 'status', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_confirmed_at', 'referral_code', 'referred_by', 'phone', 'country'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -37,6 +37,25 @@ class User extends Authenticatable
                 $user->referral_code = $code;
             }
         });
+
+        static::created(function ($user) {
+            if ($user->role === 'client') {
+                \App\Models\CrmLead::firstOrCreate(
+                    ['email' => $user->email],
+                    [
+                        'full_name' => $user->name,
+                        'company_name' => $user->company_name ?? null,
+                        'email' => $user->email,
+                        'phone' => $user->phone ?? null,
+                        'country' => $user->country ?? null,
+                        'source' => 'Client Registration',
+                        'service_interest' => 'Client Portal Account',
+                        'status' => 'New',
+                        'lead_score' => 25
+                    ]
+                );
+            }
+        });
     }
 
     /**
@@ -51,6 +70,21 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function getRegionInfoAttribute(): array
+    {
+        return \App\Helpers\PaymentHelper::getRegionInfo($this->country);
+    }
+
+    public function getCurrencySymbolAttribute(): string
+    {
+        return $this->region_info['symbol'];
+    }
+
+    public function getCurrencyCodeAttribute(): string
+    {
+        return $this->region_info['currency'];
     }
 
     public function isAdmin(): bool
@@ -161,6 +195,11 @@ class User extends Authenticatable
     public function referredBy()
     {
         return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    public function partnershipRequests()
+    {
+        return $this->hasMany(PartnershipRequest::class, 'user_id');
     }
 }
 

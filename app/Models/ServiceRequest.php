@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceRequest extends Model
 {
     protected $fillable = [
-        'client_id', 'title', 'service_type', 'description', 'budget_range', 'deadline', 'status', 'attachments', 'ai_recommendations'
+        'client_id', 'title', 'service_type', 'description', 'budget_range', 'deadline', 'status', 'attachments', 'ai_recommendations',
+        'payment_method', 'payment_status', 'payment_amount', 'payment_proof', 'payment_txid'
     ];
 
     protected $casts = [

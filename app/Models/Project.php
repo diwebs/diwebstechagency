@@ -11,7 +11,7 @@ class Project extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id', 'client_id', 'title', 'description', 'status', 'budget', 'agreement_signed_at', 'service_type', 'success_rate', 'is_validated'
+        'id', 'client_id', 'title', 'description', 'status', 'budget', 'agreement_signed_at', 'service_type', 'success_rate', 'is_validated', 'pipeline_note'
     ];
 
     protected $casts = [
@@ -44,6 +44,11 @@ class Project extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(ProjectAssignment::class);
     }
 
     public function getPaymentMadeAttribute()

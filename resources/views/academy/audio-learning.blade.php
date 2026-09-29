@@ -3,6 +3,37 @@
 @section('title', 'Audio Learning Portal - Learn on the Go')
 
 @section('academy_content')
+@unless($hasAudioPlan)
+<div class="glass-card rounded-3xl p-12 border border-purple-500/25 bg-gradient-to-br from-brand-dark-secondary to-[#1A1D21] text-center relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-0 right-0 w-80 h-80 bg-purple-500/5 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-brand-teal/5 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div class="relative z-10">
+        <div class="h-20 w-20 mx-auto rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+        </div>
+
+        <h2 class="text-xl font-extrabold text-brand-white mb-3">Audio Learning Access Required</h2>
+        <p class="text-sm text-brand-gray max-w-md mx-auto leading-relaxed mb-2">
+            Audio summaries and lecture podcasts are available exclusively to students with an active <strong class="text-purple-400">Audio Learning Plan</strong>.
+        </p>
+        <p class="text-xs text-brand-gray/60 max-w-md mx-auto leading-relaxed mb-8">
+            Contact the Diwebs admin team to upgrade your subscription model and unlock full audio library access.
+        </p>
+        <div class="flex items-center justify-center gap-4">
+            <a href="{{ route('academy.dashboard') }}"
+               class="rounded-xl border border-brand-teal/30 bg-brand-dark-secondary/60 px-8 py-3 text-xs font-bold text-brand-cyan hover:border-brand-cyan hover:bg-brand-teal/10 transition-all">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+@else
 <div x-data="audioPlayerState()" class="space-y-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -124,7 +155,7 @@
                 @forelse($audioLessons as $lesson)
                     <div class="rounded-xl border p-3 flex items-center justify-between text-xs cursor-pointer transition-all duration-200"
                          :class="currentTrack.id === {{ $lesson->id }} ? 'border-brand-cyan bg-brand-teal/5 text-brand-white font-semibold' : 'border-brand-teal/5 bg-brand-dark-secondary/20 hover:border-brand-teal/20 hover:bg-brand-dark-secondary/30 text-brand-gray'"
-                         @click="selectTrack({{ json_encode($lesson) }})">
+                         @click='selectTrack(@json($lesson))'>
                         <div class="flex items-center gap-2.5">
                             <span class="text-lg">🎵</span>
                             <div>
@@ -307,3 +338,5 @@ function audioPlayerState() {
     };
 }
 </script>
+@endunless
+@endsection

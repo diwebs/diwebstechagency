@@ -107,52 +107,129 @@ class SecurityController extends Controller
 
     public function passkeyChallenge()
     {
-        // Generate WebAuthn creation challenge
-        $challenge = Str::random(32);
-        session(['webauthn_challenge' => $challenge]);
+        $user = Auth::user();
+
+        // Cryptographically secure 32-byte challenge
+        $challengeBytes = random_bytes(32);
+        $challenge = rtrim(strtr(base64_encode($challengeBytes), '+/', '-_'), '=');
+
+        session([
+            'webauthn_reg_challenge' => $challenge,
+            'webauthn_reg_user_id'   => $user->id,
+            'webauthn_reg_expiry'    => time() + 300,
+        ]);
+
+        // Exclude already-registered credentials so the device won't prompt to re-register
+        $excludeCredentials = UserPasskey::where('user_id', $user->id)->get()->map(function ($pk) {
+            return ['type' => 'public-key', 'id' => $pk->credential_id];
+        })->values();
 
         return response()->json([
             'challenge' => $challenge,
-            'rp' => ['name' => 'Diwebs Tech Agency', 'id' => request()->getHost()],
+            'rp' => [
+                'name' => config('app.name', 'Diwebs Tech Agency'),
+                'id'   => request()->getHost(),
+            ],
             'user' => [
-                'id' => Auth::id(),
-                'name' => Auth::user()->email,
-                'displayName' => Auth::user()->name
-            ]
+                'id'          => rtrim(strtr(base64_encode((string) $user->id), '+/', '-_'), '='),
+                'name'        => $user->email,
+                'displayName' => $user->name,
+            ],
+            'pubKeyCredParams' => [
+                ['type' => 'public-key', 'alg' => -7],   // ES256 ECDSA P-256
+                ['type' => 'public-key', 'alg' => -257], // RS256
+            ],
+            'timeout'    => 60000,
+            'attestation' => 'none',
+            'authenticatorSelection' => [
+                'authenticatorAttachment' => 'platform',
+                'requireResidentKey'      => false,
+                'userVerification'        => 'required',
+            ],
+            'excludeCredentials' => $excludeCredentials,
         ]);
     }
 
     public function passkeyStore(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'assertion' => 'required|string'
+            'credential_id'      => 'required|string',
+            'client_data_json'   => 'required|string',
+            'attestation_object' => 'required|string',
+            'public_key_spki'    => 'required|string',
+            'device_name'        => 'nullable|string|max:100',
         ]);
 
-        $user = Auth::user();
-        
-        // Mock WebAuthn validation check - in production we parse PublicKeyCredentialCreationOptions
-        $credentialId = 'cred_' . Str::random(24);
-        $publicKey = 'pubkey_' . Str::random(64);
+        $user           = Auth::user();
+        $storedChallenge = session('webauthn_reg_challenge');
+        $sessionUserId  = session('webauthn_reg_user_id');
+        $expiry         = session('webauthn_reg_expiry');
+
+        if (!$storedChallenge || $sessionUserId !== $user->id) {
+            return response()->json(['message' => 'Registration session expired. Please try again.'], 422);
+        }
+        if (time() > $expiry) {
+            session()->forget(['webauthn_reg_challenge', 'webauthn_reg_user_id', 'webauthn_reg_expiry']);
+            return response()->json(['message' => 'Registration timed out. Please start again.'], 422);
+        }
+
+        // Decode and verify clientDataJSON
+        $clientDataRaw = base64_decode(strtr($request->client_data_json, '-_', '+/'));
+        $clientData    = json_decode($clientDataRaw, true);
+
+        if (!$clientData) {
+            return response()->json(['message' => 'Invalid registration data from device.'], 422);
+        }
+        if (($clientData['type'] ?? '') !== 'webauthn.create') {
+            return response()->json(['message' => 'Registration type mismatch.'], 422);
+        }
+
+        $receivedChallenge = rtrim(strtr($clientData['challenge'] ?? '', '+/', '-_'), '=');
+        if (!hash_equals($storedChallenge, $receivedChallenge)) {
+            return response()->json(['message' => 'Challenge mismatch — registration rejected.'], 422);
+        }
+
+        $expectedOrigin = request()->getSchemeAndHttpHost();
+        if (($clientData['origin'] ?? '') !== $expectedOrigin) {
+            return response()->json(['message' => 'Origin mismatch — registration rejected.'], 422);
+        }
+
+        // Convert SPKI bytes to PEM for storage
+        $spkiBytes    = base64_decode(strtr($request->public_key_spki, '-_', '+/'));
+        $pemPublicKey = "-----BEGIN PUBLIC KEY-----\n" .
+            chunk_split(base64_encode($spkiBytes), 64, "\n") .
+            "-----END PUBLIC KEY-----\n";
+
+        if (!openssl_pkey_get_public($pemPublicKey)) {
+            return response()->json(['message' => 'Invalid public key from device. Please try again.'], 422);
+        }
+
+        if (UserPasskey::where('credential_id', $request->credential_id)->exists()) {
+            return response()->json(['message' => 'This passkey is already registered.'], 422);
+        }
+
+        $osName      = $this->parseOsFromAgent(request()->userAgent());
+        $browserName = $this->parseBrowserFromAgent(request()->userAgent());
 
         $passkey = UserPasskey::create([
-            'user_id' => $user->id,
-            'credential_id' => $credentialId,
-            'public_key' => $publicKey,
-            'sign_count' => 0,
-            'name' => $request->name
+            'user_id'       => $user->id,
+            'credential_id' => $request->credential_id,
+            'public_key'    => $pemPublicKey,
+            'sign_count'    => 0,
+            'name'          => $request->device_name ?? ($osName . ' ' . $browserName),
         ]);
 
-        $this->logAuthEvent('passkey_registered', ['name' => $request->name]);
+        session()->forget(['webauthn_reg_challenge', 'webauthn_reg_user_id', 'webauthn_reg_expiry']);
+        $this->logAuthEvent('passkey_registered', ['name' => $passkey->name]);
 
         return response()->json([
-            'message' => 'Passkey registered.',
+            'message' => 'Passkey registered! You can now use your fingerprint or face to sign in.',
             'passkey' => [
-                'id' => $passkey->id,
-                'name' => $passkey->name,
+                'id'         => $passkey->id,
+                'name'       => $passkey->name,
                 'sign_count' => $passkey->sign_count,
-                'created_at' => $passkey->created_at->toIso8601String()
-            ]
+                'created_at' => $passkey->created_at->toIso8601String(),
+            ],
         ]);
     }
 
@@ -218,7 +295,7 @@ class SecurityController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password' => 'required|string|min:12|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = Auth::user();
@@ -305,12 +382,31 @@ class SecurityController extends Controller
     private function logAuthEvent($type, $details)
     {
         AuditLog::create([
-            'user_id' => Auth::id(),
+            'user_id'    => Auth::id(),
             'event_type' => $type,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'details' => $details,
+            'details'    => $details,
             'created_at' => now()
         ]);
+    }
+
+    private function parseOsFromAgent($agent)
+    {
+        if (preg_match('/windows/i', $agent)) return 'Windows';
+        if (preg_match('/macintosh/i', $agent)) return 'macOS';
+        if (preg_match('/iphone|ipad/i', $agent)) return 'iOS';
+        if (preg_match('/android/i', $agent)) return 'Android';
+        if (preg_match('/linux/i', $agent)) return 'Linux';
+        return 'Device';
+    }
+
+    private function parseBrowserFromAgent($agent)
+    {
+        if (preg_match('/edg/i', $agent)) return 'Edge';
+        if (preg_match('/chrome/i', $agent)) return 'Chrome';
+        if (preg_match('/safari/i', $agent)) return 'Safari';
+        if (preg_match('/firefox/i', $agent)) return 'Firefox';
+        return 'Browser';
     }
 }

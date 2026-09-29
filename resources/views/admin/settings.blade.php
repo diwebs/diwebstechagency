@@ -28,6 +28,11 @@
                 class="px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all select-none cursor-pointer whitespace-nowrap">
             ✉️ Mail Configuration
         </button>
+        <button @click="activeTab = 'oauth'" 
+                :class="activeTab === 'oauth' ? 'text-brand-cyan border-brand-cyan bg-brand-teal/5 font-semibold' : 'text-brand-gray border-transparent hover:text-brand-white hover:border-brand-teal/40'" 
+                class="px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all select-none cursor-pointer whitespace-nowrap">
+            🔐 Social Login
+        </button>
         <button @click="activeTab = 'maintenance'" 
                 :class="activeTab === 'maintenance' ? 'text-brand-cyan border-brand-cyan bg-brand-teal/5 font-semibold' : 'text-brand-gray border-transparent hover:text-brand-white hover:border-brand-teal/40'" 
                 class="px-5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all select-none cursor-pointer whitespace-nowrap">
@@ -55,6 +60,20 @@
                                required 
                                class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
                     </div>
+
+                    <!-- Session Inactivity Idle Timeout -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Session Inactivity Timeout (Minutes)</label>
+                        <input type="number" 
+                               name="session_idle_timeout" 
+                               value="{{ $settings['session_idle_timeout'] }}" 
+                               required 
+                               min="1"
+                               max="1440"
+                               class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        <span class="block text-[10px] text-brand-gray mt-1">Specify the duration of inactivity (in minutes) after which an inactive user session will be automatically terminated and logged out.</span>
+                    </div>
+
 
                     <!-- Referral Bonus Amount -->
                     <div>
@@ -185,6 +204,17 @@
                                placeholder="https://..."
                                class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
                         <span class="block text-[10px] text-brand-gray mt-1">Preview thumbnail displayed when site links are shared on social portals.</span>
+                    </div>
+
+                    <!-- Google Reviews URL -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Google Reviews Page URL</label>
+                        <input type="url" 
+                               name="google_reviews_url" 
+                               value="{{ $settings['google_reviews_url'] }}" 
+                               placeholder="https://search.google.com/local/writereview?placeid=..."
+                               class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        <span class="block text-[10px] text-brand-gray mt-1">Direct destination link to let clients share testimonials on your business page. Fallback is set to search for "diwebs tech agency review".</span>
                     </div>
 
                     <div class="flex justify-end pt-5 border-t border-brand-teal/10">
@@ -336,7 +366,174 @@
             </div>
         </div>
 
-        <!-- TAB 4: Maintenance Center -->
+        <!-- TAB 4: OAuth / Social Login -->
+        <div x-show="activeTab === 'oauth'" x-transition class="space-y-6 max-w-4xl">
+
+            <!-- Info Banner -->
+            <div class="glass-card rounded-2xl p-5 border border-brand-teal/15 flex gap-4 items-start">
+                <span class="text-2xl mt-0.5">🔐</span>
+                <div>
+                    <h3 class="text-sm font-bold text-brand-white">Social Login Configuration</h3>
+                    <p class="text-xs text-brand-gray mt-1 leading-relaxed">Enable your users to sign in with Google, Apple, or Microsoft accounts. You must create an OAuth app in each provider's developer console, copy the credentials below, and set the correct <strong class="text-brand-cyan">Redirect URI</strong> in both your app and the provider's dashboard.</p>
+                </div>
+            </div>
+
+            <form action="{{ route('admin.settings.oauth.update') }}" method="POST" class="space-y-6">
+                @csrf
+
+                {{-- ============ GOOGLE ============ --}}
+                <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-5">
+                    <div class="flex items-center justify-between border-b border-brand-teal/10 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" class="w-5 h-5"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-brand-white">Google OAuth 2.0</h4>
+                                <p class="text-[10px] text-brand-gray">Allow users to sign in with their Google account</p>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" name="oauth_google_enabled" value="1" {{ $settings['oauth_google_enabled'] ? 'checked' : '' }} class="accent-brand-cyan w-4 h-4">
+                            <span class="text-xs font-bold text-brand-white">Enable</span>
+                        </label>
+                    </div>
+
+                    <div class="p-3 rounded-lg bg-brand-teal/5 border border-brand-teal/10 text-[10px] text-brand-gray leading-relaxed space-y-1">
+                        <p class="font-semibold text-brand-cyan text-xs">📋 Setup Steps:</p>
+                        <p>1. Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-brand-cyan underline">console.cloud.google.com/apis/credentials</a></p>
+                        <p>2. Create a new <strong>OAuth 2.0 Client ID</strong> (Web Application)</p>
+                        <p>3. Add your <strong>Redirect URI</strong> (shown below) to the "Authorized redirect URIs" list</p>
+                        <p>4. Copy the Client ID and Client Secret here</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Client ID</label>
+                            <input type="text" name="oauth_google_client_id" value="{{ $settings['oauth_google_client_id'] }}" placeholder="123456789-xxxx.apps.googleusercontent.com" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Client Secret</label>
+                            <input type="password" name="oauth_google_client_secret" placeholder="Leave blank to keep current secret" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Redirect URI <span class="text-brand-gray normal-case font-normal">(copy this into Google Console)</span></label>
+                        <div class="flex gap-2">
+                            <input type="url" name="oauth_google_redirect_uri" value="{{ $settings['oauth_google_redirect_uri'] }}" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                            <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)" class="rounded-lg bg-brand-teal/10 border border-brand-teal/20 text-brand-cyan px-4 py-2 text-xs font-bold whitespace-nowrap hover:bg-brand-teal/20 transition-all cursor-pointer">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ============ APPLE ============ --}}
+                <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-5">
+                    <div class="flex items-center justify-between border-b border-brand-teal/10 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" fill="white" class="w-5 h-5"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-brand-white">Apple Sign In</h4>
+                                <p class="text-[10px] text-brand-gray">Allow users to sign in with their Apple ID</p>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" name="oauth_apple_enabled" value="1" {{ $settings['oauth_apple_enabled'] ? 'checked' : '' }} class="accent-brand-cyan w-4 h-4">
+                            <span class="text-xs font-bold text-brand-white">Enable</span>
+                        </label>
+                    </div>
+
+                    <div class="p-3 rounded-lg bg-brand-teal/5 border border-brand-teal/10 text-[10px] text-brand-gray leading-relaxed space-y-1">
+                        <p class="font-semibold text-brand-cyan text-xs">📋 Setup Steps:</p>
+                        <p>1. Go to <a href="https://developer.apple.com/account/resources/identifiers/list/serviceId" target="_blank" class="text-brand-cyan underline">developer.apple.com</a> → Identifiers → Services IDs</p>
+                        <p>2. Create a Services ID and enable <strong>Sign In with Apple</strong></p>
+                        <p>3. Configure the redirect URL and add your domain</p>
+                        <p>4. Under <strong>Keys</strong>, create a new key with Sign In enabled and download the .p8 file</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Services ID (Client ID)</label>
+                            <input type="text" name="oauth_apple_client_id" value="{{ $settings['oauth_apple_client_id'] }}" placeholder="com.yourapp.web" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Team ID</label>
+                            <input type="text" name="oauth_apple_team_id" value="{{ $settings['oauth_apple_team_id'] }}" placeholder="ABCDE12345" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Key ID</label>
+                            <input type="text" name="oauth_apple_key_id" value="{{ $settings['oauth_apple_key_id'] }}" placeholder="FGHIJ67890" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Redirect URI <span class="text-brand-gray normal-case font-normal">(copy this into Apple developer console)</span></label>
+                        <div class="flex gap-2">
+                            <input type="url" name="oauth_apple_redirect_uri" value="{{ $settings['oauth_apple_redirect_uri'] }}" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                            <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)" class="rounded-lg bg-brand-teal/10 border border-brand-teal/20 text-brand-cyan px-4 py-2 text-xs font-bold whitespace-nowrap hover:bg-brand-teal/20 transition-all cursor-pointer">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ============ MICROSOFT ============ --}}
+                <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-5">
+                    <div class="flex items-center justify-between border-b border-brand-teal/10 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                                <svg viewBox="0 0 23 23" class="w-5 h-5"><path fill="#f25022" d="M0 0h11v11H0z"/><path fill="#00a4ef" d="M12 0h11v11H12z"/><path fill="#7fba00" d="M0 12h11v11H0z"/><path fill="#ffb900" d="M12 12h11v11H12z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-brand-white">Microsoft Azure AD</h4>
+                                <p class="text-[10px] text-brand-gray">Allow users to sign in with their Microsoft / Azure account</p>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" name="oauth_microsoft_enabled" value="1" {{ $settings['oauth_microsoft_enabled'] ? 'checked' : '' }} class="accent-brand-cyan w-4 h-4">
+                            <span class="text-xs font-bold text-brand-white">Enable</span>
+                        </label>
+                    </div>
+
+                    <div class="p-3 rounded-lg bg-brand-teal/5 border border-brand-teal/10 text-[10px] text-brand-gray leading-relaxed space-y-1">
+                        <p class="font-semibold text-brand-cyan text-xs">📋 Setup Steps:</p>
+                        <p>1. Go to <a href="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" class="text-brand-cyan underline">portal.azure.com</a> → Azure Active Directory → App Registrations</p>
+                        <p>2. Click <strong>New Registration</strong>, choose account type (single or multi-tenant)</p>
+                        <p>3. Add the <strong>Redirect URI</strong> (shown below) as a Web platform redirect</p>
+                        <p>4. Under <strong>Certificates & secrets</strong>, create a Client Secret and copy it here</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Application (Client) ID</label>
+                            <input type="text" name="oauth_microsoft_client_id" value="{{ $settings['oauth_microsoft_client_id'] }}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Client Secret</label>
+                            <input type="password" name="oauth_microsoft_client_secret" placeholder="Leave blank to keep current secret" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-white uppercase mb-2">Tenant ID</label>
+                            <input type="text" name="oauth_microsoft_tenant_id" value="{{ $settings['oauth_microsoft_tenant_id'] }}" placeholder="common" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                            <span class="block text-[10px] text-brand-gray mt-1">Use <code class="text-brand-cyan">common</code> for personal &amp; work accounts, or paste your Directory (tenant) ID for single-tenant apps.</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-white uppercase mb-2">Redirect URI <span class="text-brand-gray normal-case font-normal">(copy this into Azure app registration)</span></label>
+                        <div class="flex gap-2">
+                            <input type="url" name="oauth_microsoft_redirect_uri" value="{{ $settings['oauth_microsoft_redirect_uri'] }}" class="w-full rounded-lg bg-brand-dark-secondary border border-brand-teal/15 px-4 py-2.5 text-xs text-brand-white focus:border-brand-cyan/60 focus:outline-none transition-all">
+                            <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)" class="rounded-lg bg-brand-teal/10 border border-brand-teal/20 text-brand-cyan px-4 py-2 text-xs font-bold whitespace-nowrap hover:bg-brand-teal/20 transition-all cursor-pointer">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="rounded-lg bg-gradient-to-r from-brand-teal to-brand-cyan px-8 py-3 text-xs font-bold text-brand-dark-secondary shadow hover:opacity-90 transition-all cursor-pointer">
+                        💾 Save Social Login Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TAB 5: Maintenance Center -->
         <div x-show="activeTab === 'maintenance'" x-transition class="space-y-6 max-w-4xl">
             <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 space-y-6">
                 <div>
@@ -344,7 +541,7 @@
                     <p class="text-xs text-brand-gray">Perform system flushing, rebuild routing caches, and purge stale audit logs and expired codes.</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Clear Cache -->
                     <div class="border border-brand-teal/10 rounded-xl p-4 bg-brand-teal/5 flex flex-col justify-between">
                         <div>
@@ -369,6 +566,20 @@
                             @csrf
                             <button type="submit" class="w-full rounded bg-brand-teal/20 border border-brand-teal/35 hover:bg-brand-teal/30 text-brand-cyan px-4 py-2 text-xs font-bold text-center transition-all cursor-pointer">
                                 ⚙️ Optimize Database
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Run Migrations -->
+                    <div class="border border-brand-teal/10 rounded-xl p-4 bg-brand-teal/5 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold text-brand-white uppercase text-brand-cyan">Run Schema Migrations</h4>
+                            <p class="text-[10px] text-brand-gray mt-1 mb-4">Executes pending database migration scripts to update database structures and tables safely.</p>
+                        </div>
+                        <form action="{{ route('admin.settings.run-migrations') }}" method="POST" onsubmit="return confirm('🚀 Database Migrations: This will run all pending migrations in production. Do you want to proceed?');">
+                            @csrf
+                            <button type="submit" class="w-full rounded bg-brand-teal/20 border border-brand-teal/35 hover:bg-brand-teal/30 text-brand-cyan px-4 py-2 text-xs font-bold text-center transition-all cursor-pointer">
+                                🚀 Run Migrations
                             </button>
                         </form>
                     </div>

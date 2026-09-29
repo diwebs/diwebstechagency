@@ -346,6 +346,7 @@
 
             <form action="{{ route('lead.submit') }}" method="POST" class="relative z-10 space-y-6">
                 @csrf
+                <x-honeypot />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="name" class="block text-xs font-semibold text-brand-cyan uppercase">Company Representative Name</label>

@@ -55,7 +55,7 @@ class ClientReviewTest extends TestCase
             'company_name' => 'Test Company',
             'rating' => 5,
             'comment' => 'This is a great review comment by a client!',
-            'status' => 'approved'
+            'status' => 'pending'
         ]);
     }
 
@@ -101,5 +101,96 @@ class ClientReviewTest extends TestCase
         $response->assertSee('Test Client Name');
         $response->assertSee('Awesome Company Inc.');
         $response->assertSee('Perfect project delivery experience!');
+    }
+
+    public function test_admin_can_approve_review(): void
+    {
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@diwebstechagency.website',
+            'password' => bcrypt('SecurePassword123!'),
+            'role' => 'super_admin',
+            'status' => 'active'
+        ]);
+
+        $review = Review::create([
+            'user_id' => $this->client->id,
+            'client_name' => 'Test Client',
+            'rating' => 4,
+            'comment' => 'This is a pending comment for test.',
+            'status' => 'pending'
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.reviews.approve', $review->id));
+
+        $response->assertStatus(302);
+        $review->refresh();
+        $this->assertEquals('approved', $review->status);
+    }
+
+    public function test_admin_can_delete_review(): void
+    {
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@diwebstechagency.website',
+            'password' => bcrypt('SecurePassword123!'),
+            'role' => 'super_admin',
+            'status' => 'active'
+        ]);
+
+        $review = Review::create([
+            'user_id' => $this->client->id,
+            'client_name' => 'Test Client',
+            'rating' => 4,
+            'comment' => 'This is a comment that will be deleted.',
+            'status' => 'approved'
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.reviews.delete', $review->id));
+
+        $response->assertStatus(302);
+        $this->assertDatabaseMissing('reviews', ['id' => $review->id]);
+    }
+
+    public function test_payment_settings_persist_across_cache_clear(): void
+    {
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@diwebstechagency.website',
+            'password' => bcrypt('SecurePassword123!'),
+            'role' => 'super_admin',
+            'status' => 'active'
+        ]);
+
+        // Save payment settings
+        $response = $this->actingAs($admin)
+            ->post(route('admin.payment-settings.update'), [
+                'active_gateway'    => 'crypto',
+                'default_currency'  => 'NGN',
+                'currency_symbol'   => '₦',
+                'currency_position' => 'before',
+                'invoice_prefix'    => 'DIW',
+                'tax_rate'          => 7.5,
+                'tax_label'         => 'VAT',
+                'crypto_wallet_btc' => 'test-btc-address',
+                'crypto_wallet_usdt'=> 'test-usdt-address',
+                'crypto_enabled'    => 'on'
+            ]);
+
+        $response->assertStatus(302);
+
+        // Verify values are in SettingsHelper JSON storage
+        $this->assertEquals('crypto', \App\Helpers\SettingsHelper::get('payment_active_gateway'));
+
+        // Clear the cache
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+
+        // Verify values still persist from JSON store
+        $this->assertEquals('crypto', \App\Helpers\SettingsHelper::get('payment_active_gateway'));
+        $this->assertEquals('NGN', \App\Helpers\SettingsHelper::get('payment_default_currency'));
+        $this->assertEquals('₦', \App\Helpers\SettingsHelper::get('payment_currency_symbol'));
+        $this->assertEquals('test-btc-address', \App\Helpers\SettingsHelper::get('payment_crypto_wallet_btc'));
     }
 }

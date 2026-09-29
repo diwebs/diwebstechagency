@@ -18,10 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'auth.staff' => \App\Http\Middleware\AuthenticateStaff::class,
+            'staff.permission' => \App\Http\Middleware\StaffPermissionMiddleware::class,
+            'spam.protect' => \App\Http\Middleware\SpamProtectionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();

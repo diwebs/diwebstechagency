@@ -67,7 +67,7 @@
 
                 <!-- Article Content -->
                 <div class="prose prose-invert prose-cyan max-w-none text-brand-gray/95 text-sm sm:text-base leading-relaxed space-y-5">
-                    {!! nl2br(e($article->content)) !!}
+                    {!! $article->content !!}
                 </div>
 
                 <!-- Share Trigger Block -->

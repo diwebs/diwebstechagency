@@ -11,7 +11,14 @@ class SecurityTimeoutMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
+        $isAuthenticated = false;
+        try {
+            $isAuthenticated = Auth::check();
+        } catch (\Throwable $e) {
+            // Silence query exceptions if database is unmigrated or tables (e.g., users) do not exist yet
+        }
+
+        if ($isAuthenticated) {
             $user = Auth::user();
             
             // 1. Session Rotation (rotate ID periodically e.g., every 5 minutes or on each authenticated view check)
@@ -25,16 +32,25 @@ class SecurityTimeoutMiddleware
             }
 
             // 2. Idle Timeout check (Inactivity) - Configurable (Default 15 minutes = 900s)
-            $idleLimit = config('session.idle_timeout', 900); 
+            $idleTimeoutMinutes = \App\Helpers\SettingsHelper::get('session_idle_timeout', 15);
+            $idleLimit = $idleTimeoutMinutes * 60;
             $lastActivity = session('last_activity_time');
 
             if ($lastActivity && now()->timestamp - $lastActivity > $idleLimit) {
+                $intendedUrl = $request->fullUrl();
+
                 Auth::logout();
                 session()->invalidate();
                 session()->regenerateToken();
 
+                // Save in the new session so it is preserved across invalidation
+                session(['session_expired_redirect_url' => $intendedUrl]);
+
                 if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Session expired due to inactivity.'], 401);
+                    return response()->json([
+                        'message' => 'Session expired due to inactivity.',
+                        'redirect' => route('login')
+                    ], 401);
                 }
 
                 return redirect()->route('login')->with('error', 'Your session has expired due to inactivity.');

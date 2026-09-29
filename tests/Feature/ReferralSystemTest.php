@@ -98,8 +98,10 @@ class ReferralSystemTest extends TestCase
         $response = $this->actingAs($admin)
             ->post(route('admin.settings.update'), [
                 'app_name' => 'New Brand Name',
-                'referral_bonus_amount' => 75.00
+                'referral_bonus_amount' => 75.00,
+                'session_idle_timeout' => 15
             ]);
+
 
         $response->assertStatus(302);
         $this->assertEquals(75.00, cache('referral_bonus_amount'));

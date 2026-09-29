@@ -8,12 +8,12 @@
         <div class="absolute inset-0 bg-dot-matrix opacity-25"></div>
         
         <div class="relative z-10 text-center mb-6">
-            <h2 class="text-2xl font-bold text-brand-white">Ecosystem Authentication</h2>
-            <p class="mt-2 text-xs text-brand-gray">Sign in to access your secure portal dashboard</p>
+            <h2 class="text-2xl font-bold text-brand-white" x-text="mode === 'login' ? 'Ecosystem Authentication' : (mode === 'forgot_request' ? 'Recover Password' : 'Set New Password')">Ecosystem Authentication</h2>
+            <p class="mt-2 text-xs text-brand-gray" x-text="mode === 'login' ? 'Sign in to access your secure portal dashboard' : (mode === 'forgot_request' ? 'Enter your email to receive a recovery verification code' : 'Enter the verification code and set your new password')">Sign in to access your secure portal dashboard</p>
         </div>
 
         <!-- Device recognition alert -->
-        <div x-show="newDeviceAlert" class="relative z-10 mb-4 p-3 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-400 flex items-center gap-2 select-none animate-pulse">
+        <div x-show="newDeviceAlert && mode === 'login'" class="relative z-10 mb-4 p-3 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-400 flex items-center gap-2 select-none animate-pulse">
             <span>⚠️</span>
             <span>Unrecognized device. OTP check will be required.</span>
         </div>
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Standard Login Forms -->
-        <div x-show="!show2FA" class="relative z-10 space-y-4">
+        <div x-show="!show2FA && mode === 'login'" class="relative z-10 space-y-4">
             <form action="{{ route('login') }}" method="POST" @submit.prevent="handleLogin()" class="space-y-4">
                 @csrf
                 <!-- Dynamic inputs -->
@@ -49,7 +49,7 @@
                 <div>
                     <div class="flex items-center justify-between">
                         <label for="password" class="block text-xs font-semibold text-brand-cyan uppercase">Password</label>
-                        <a href="{{ route('password.request') }}" class="text-[10px] text-brand-cyan hover:underline uppercase font-semibold">Forgot?</a>
+                        <a href="{{ route('password.request') }}" @click.prevent="mode = 'forgot_request'; errorMessage = ''; successMessage = ''" class="text-[10px] text-brand-cyan hover:underline uppercase font-semibold">Forgot?</a>
                     </div>
                     <input type="password" name="password" id="password" x-model="password" required class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
                 </div>
@@ -65,15 +65,15 @@
             </div>
 
             <div class="grid grid-cols-3 gap-2">
-                <button type="button" @click="triggerSSO('Google')" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
+                <a href="{{ route('auth.google') }}" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
                     <img src="/images/brand/google.svg" alt="Google" class="h-4 w-4"> Google
-                </button>
-                <button type="button" @click="triggerSSO('Apple')" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
+                </a>
+                <a href="{{ route('auth.apple') }}" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg> Apple
-                </button>
-                <button type="button" @click="triggerSSO('Microsoft')" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
+                </a>
+                <a href="{{ route('auth.microsoft') }}" class="rounded-md border border-brand-teal/20 hover:border-brand-cyan/40 bg-brand-dark-secondary/40 py-2.5 flex items-center justify-center gap-1.5 text-xs text-brand-white hover:bg-brand-dark-primary/60 transition-all cursor-pointer">
                     <img src="/images/brand/microsoft.svg" alt="Microsoft" class="h-4 w-4"> Azure
-                </button>
+                </a>
             </div>
 
             <!-- Passkey Login Trigger -->
@@ -82,8 +82,52 @@
             </button>
         </div>
 
+        <!-- Forgot Password Request Form -->
+        <div x-show="!show2FA && mode === 'forgot_request'" x-transition class="relative z-10 space-y-4">
+            <form @submit.prevent="handleResetRequest()" class="space-y-4">
+                <div>
+                    <label for="reset_email" class="block text-xs font-semibold text-brand-cyan uppercase">Corporate Email</label>
+                    <input type="email" id="reset_email" x-model="email" required class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
+
+                <button type="submit" class="w-full rounded-md bg-gradient-to-r from-brand-teal to-brand-cyan py-3 text-sm font-bold text-brand-dark-secondary shadow-md hover:opacity-90 transition-all cursor-pointer">Send Verification Code</button>
+                <button type="button" @click="mode = 'login'; errorMessage = ''; successMessage = ''" class="w-full text-xs text-brand-gray hover:text-brand-white transition-all text-center">Back to Login</button>
+            </form>
+        </div>
+
+        <!-- Forgot Password Reset Form -->
+        <div x-show="!show2FA && mode === 'forgot_reset'" x-transition class="relative z-10 space-y-4">
+            <form @submit.prevent="handlePasswordReset()" class="space-y-4">
+                <div>
+                    <label for="reset_confirm_email" class="block text-xs font-semibold text-brand-cyan uppercase">Corporate Email</label>
+                    <input type="email" id="reset_confirm_email" x-model="email" required class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
+
+                <div>
+                    <label for="reset_code" class="block text-xs font-semibold text-brand-cyan uppercase">6-Digit Verification Code</label>
+                    <input type="text" id="reset_code" x-model="resetCode" maxlength="6" required placeholder="000000" class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white tracking-[8px] text-center font-bold focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
+
+                <div>
+                    <label for="new_password" class="block text-xs font-semibold text-brand-cyan uppercase">New Password</label>
+                    <input type="password" id="new_password" x-model="newPassword" required class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
+
+                <div>
+                    <label for="new_password_confirmation" class="block text-xs font-semibold text-brand-cyan uppercase">Confirm New Password</label>
+                    <input type="password" id="new_password_confirmation" x-model="newPasswordConfirmation" required class="mt-2 block w-full rounded-md border border-brand-teal/20 bg-brand-dark-secondary/60 px-4 py-2.5 text-sm text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                </div>
+
+                <button type="submit" class="w-full rounded-md bg-gradient-to-r from-brand-teal to-brand-cyan py-3 text-sm font-bold text-brand-dark-secondary shadow-md hover:opacity-90 transition-all cursor-pointer">Reset Password</button>
+                <button type="button" @click="mode = 'forgot_request'; errorMessage = ''; successMessage = ''" class="w-full text-xs text-brand-gray hover:text-brand-white transition-all text-center">Resend Code</button>
+            </form>
+        </div>
+
         <!-- Alert message display -->
         <div x-show="errorMessage" class="relative z-10 mt-4 p-3 rounded bg-rose-950/40 border border-rose-500/30 text-xs text-rose-400 text-center" x-text="errorMessage"></div>
+
+        <!-- Success message display -->
+        <div x-show="successMessage" class="relative z-10 mt-4 p-3 rounded bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-400 text-center" x-text="successMessage"></div>
 
     </div>
 </div>
@@ -91,13 +135,18 @@
 <script>
     function loginPage() {
         return {
-            email: '',
+            email: '{{ $email ?? '' }}',
             password: '',
             show2FA: false,
             otpCode: '',
             newDeviceAlert: false,
-            errorMessage: '{{ $errors->first() }}',
+            errorMessage: '{{ $errors->first() }}' || '{{ session('error') }}',
+            successMessage: '{{ session('success') }}',
             errorShake: false,
+            mode: '{{ $initialMode ?? 'login' }}',
+            resetCode: '',
+            newPassword: '',
+            newPasswordConfirmation: '',
 
             init() {
                 // Device fingerprint simulation checks in local storage
@@ -114,6 +163,7 @@
 
             async handleLogin() {
                 this.errorMessage = '';
+                this.successMessage = '';
                 
                 try {
                     // Send AJAX precheck for 2FA requirement to handle login dynamically
@@ -152,6 +202,7 @@
 
             async verify2FA() {
                 this.errorMessage = '';
+                this.successMessage = '';
                 try {
                     const response = await fetch('{{ route("login.2fa.verify") }}', {
                         method: 'POST',
@@ -176,21 +227,12 @@
                 }
             },
 
-            triggerSSO(provider) {
-                alert(`${provider} Single Sign-On simulation. In production, this redirects to the secure OAuth authorization endpoints.`);
-            },
-
-            async loginWithPasskey() {
+            async handleResetRequest() {
                 this.errorMessage = '';
-                if (!window.PublicKeyCredential) {
-                    this.errorMessage = 'Biometric passkeys are not supported on this browser version.';
-                    this.triggerShake();
-                    return;
-                }
+                this.successMessage = '';
                 
                 try {
-                    // Fetch WebAuthn assertion challenge options
-                    const optionsResponse = await fetch('/auth/passkeys/login-challenge', {
+                    const response = await fetch('{{ route("password.email") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -200,35 +242,164 @@
                         body: JSON.stringify({ email: this.email })
                     });
                     
-                    if (!optionsResponse.ok) {
-                        const errData = await optionsResponse.json();
-                        throw new Error(errData.message || 'Failed to retrieve passkey challenge.');
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        this.successMessage = data.message || 'Verification code sent successfully.';
+                        this.mode = 'forgot_reset';
+                    } else {
+                        this.errorMessage = data.message || 'Failed to dispatch verification code.';
+                        this.triggerShake();
                     }
-                    
-                    // WebAuthn request browser credential mapping
-                    alert('Requesting biometric verification from OS (Windows Hello / TouchID)...');
-                    
-                    // In real environment, call navigator.credentials.get()
-                    // Propose fallback bypass simulation if no passkey registered
-                    const response = await fetch('/auth/passkeys/verify', {
+                } catch (err) {
+                    this.errorMessage = 'A network error occurred. Please check your connection.';
+                    this.triggerShake();
+                }
+            },
+
+            async handlePasswordReset() {
+                this.errorMessage = '';
+                this.successMessage = '';
+                
+                try {
+                    const response = await fetch('{{ route("password.update") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ email: this.email, assertion: 'passkey_auth_verified_signature' })
+                        body: JSON.stringify({
+                            email: this.email,
+                            code: this.resetCode,
+                            password: this.newPassword,
+                            password_confirmation: this.newPasswordConfirmation
+                        })
                     });
                     
                     const data = await response.json();
+
                     if (response.ok) {
-                        window.location.href = data.redirect;
+                        this.successMessage = data.message || 'Password reset successfully.';
+                        this.mode = 'login';
+                        this.resetCode = '';
+                        this.newPassword = '';
+                        this.newPasswordConfirmation = '';
+                        this.password = '';
                     } else {
-                        this.errorMessage = data.message || 'Passkey verification failed.';
+                        this.errorMessage = data.message || 'Failed to reset password.';
                         this.triggerShake();
                     }
                 } catch (err) {
-                    this.errorMessage = err.message || 'Failed to complete WebAuthn handshake.';
+                    this.errorMessage = 'A network error occurred. Please check your connection.';
+                    this.triggerShake();
+                }
+            },
+
+            triggerSSO(provider) {
+                alert(`${provider} Single Sign-On simulation. In production, this redirects to the secure OAuth authorization endpoints.`);
+            },
+
+            async loginWithPasskey() {
+                this.errorMessage = '';
+                this.successMessage = '';
+
+                if (!window.PublicKeyCredential) {
+                    this.errorMessage = 'Biometric login is not supported on this browser. Please use Chrome, Edge, Safari, or Firefox.';
+                    this.triggerShake();
+                    return;
+                }
+                if (!this.email) {
+                    this.errorMessage = 'Please enter your email address first, then click the fingerprint / face login button.';
+                    this.triggerShake();
+                    return;
+                }
+
+                try {
+                    // Step 1 — Ask the server for a challenge and the list of registered credential IDs
+                    const optRes = await fetch('/auth/passkeys/login-challenge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ email: this.email }),
+                    });
+
+                    if (!optRes.ok) {
+                        const err = await optRes.json();
+                        throw new Error(err.message || 'Could not start passkey login. Please use your password instead.');
+                    }
+
+                    const opts = await optRes.json();
+
+                    // Step 2 — Convert base64url challenge & credential IDs to ArrayBuffers for the WebAuthn API
+                    function b64ToBuffer(b64url) {
+                        const b64 = (b64url + '===').slice(0, b64url.length + (4 - b64url.length % 4) % 4)
+                            .replace(/-/g, '+').replace(/_/g, '/');
+                        return Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+                    }
+                    function bufferToB64Url(buf) {
+                        return btoa(String.fromCharCode(...new Uint8Array(buf)))
+                            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                    }
+
+                    const publicKeyOptions = {
+                        challenge:        b64ToBuffer(opts.challenge),
+                        rpId:             opts.rpId,
+                        timeout:          opts.timeout ?? 60000,
+                        userVerification: opts.userVerification ?? 'required',
+                        allowCredentials: (opts.allowCredentials ?? []).map(cred => ({
+                            type: 'public-key',
+                            id:   b64ToBuffer(cred.id),
+                            transports: cred.transports ?? ['internal'],
+                        })),
+                    };
+
+                    // Step 3 — Ask the OS / authenticator (Windows Hello, Touch ID, Face ID, etc.)
+                    // This opens the native biometric prompt on the user's device
+                    let assertion;
+                    try {
+                        assertion = await navigator.credentials.get({ publicKey: publicKeyOptions });
+                    } catch (domErr) {
+                        if (domErr.name === 'NotAllowedError') {
+                            throw new Error('Biometric verification was cancelled or timed out. Please try again.');
+                        }
+                        if (domErr.name === 'SecurityError') {
+                            throw new Error('Passkey login requires a secure connection (HTTPS). Please contact the administrator.');
+                        }
+                        throw new Error(domErr.message || 'Your device could not complete biometric verification.');
+                    }
+
+                    // Step 4 — Send the signed assertion to the server for cryptographic verification
+                    const payload = {
+                        credential_id:      bufferToB64Url(assertion.rawId),
+                        authenticator_data: bufferToB64Url(assertion.response.authenticatorData),
+                        client_data_json:   bufferToB64Url(assertion.response.clientDataJSON),
+                        signature:          bufferToB64Url(assertion.response.signature),
+                    };
+
+                    const verifyRes = await fetch('/auth/passkeys/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await verifyRes.json();
+                    if (verifyRes.ok) {
+                        this.successMessage = 'Identity confirmed! Redirecting you now…';
+                        setTimeout(() => { window.location.href = data.redirect; }, 600);
+                    } else {
+                        this.errorMessage = data.message || 'Passkey verification failed. Please log in with your password.';
+                        this.triggerShake();
+                    }
+                } catch (err) {
+                    this.errorMessage = err.message || 'Biometric login could not be completed. Please use your password.';
                     this.triggerShake();
                 }
             }

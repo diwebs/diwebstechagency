@@ -14,8 +14,10 @@ use App\Models\ProjectFile;
 use App\Models\Message;
 use App\Models\TeamAccess;
 use App\Models\MilestoneLog;
+use App\Models\PartnershipRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PortalController extends Controller
 {
@@ -24,7 +26,7 @@ class PortalController extends Controller
         $user = $request->user();
         
         // 1. Fetch related project items
-        $projects = Project::with(['milestones.logs', 'invoices', 'client'])->where('client_id', $user->id)->get();
+        $projects = Project::with(['milestones.logs', 'invoices', 'client', 'assignments.staff'])->where('client_id', $user->id)->get();
         $unpaidInvoices = Invoice::where('client_id', $user->id)->whereIn('status', ['unpaid', 'pending_partial'])->get();
         $invoiceHistory = Invoice::where('client_id', $user->id)->orderBy('created_at', 'desc')->get();
         
@@ -74,6 +76,9 @@ class PortalController extends Controller
         $userNotifications = \App\Models\UserNotification::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
         \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
 
+        // 11. Fetch client partnership request
+        $partnershipRequest = PartnershipRequest::where('user_id', $user->id)->first();
+
         return view('portal.dashboard', compact(
             'projects',
             'unpaidInvoices',
@@ -92,7 +97,8 @@ class PortalController extends Controller
             'referrals',
             'totalBonusEarned',
             'pendingBonus',
-            'userNotifications'
+            'userNotifications',
+            'partnershipRequest'
         ));
     }
 
@@ -395,7 +401,7 @@ class PortalController extends Controller
             'is_read' => false
         ]);
 
-        return back()->with('success', 'Service request submitted successfully. Automated proposal details loaded in requests log.');
+        return redirect()->route('portal.checkout', $serviceRequest->id)->with('success', 'Service request submitted successfully. Please select your payment method to kickstart your project!');
     }
 
     public function milestoneAction(Request $request, $id)
@@ -735,9 +741,327 @@ class PortalController extends Controller
             'company_name' => $companyName,
             'rating' => $request->input('rating'),
             'comment' => $request->input('comment'),
-            'status' => 'approved' // auto-approved as per implementation plan
+            'status' => 'pending'
         ]);
 
-        return back()->with('success', 'Thank you! Your review and trust rating have been submitted and are now live on the homepage.');
+        \App\Models\AdminNotification::create([
+            'type' => 'customer_review',
+            'title' => 'New Customer Review Submitted by ' . $user->name,
+            'details' => [
+                'client_name' => $user->name,
+                'email' => $user->email,
+                'rating' => $request->input('rating'),
+                'comment' => $request->input('comment'),
+                'company_name' => $companyName
+            ]
+        ]);
+
+        return back()->with('success', 'Thank you! Your review has been submitted and is pending administrator moderation.');
+    }
+
+    public function submitPartnershipRequest(Request $request)
+    {
+        $request->validate([
+            'company_name' => 'required|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'partnership_type' => 'required|string|in:Technology Partner,Co-Marketing Partner,Referral Partner,Reseller Partner,Strategic Alliance,Other',
+            'business_description' => 'required|string|min:10',
+            'synergy_goals' => 'required|string|min:10',
+            'expected_contribution' => 'required|string|min:10',
+            'signed_name' => 'required|string|max:150',
+            'agree_terms' => 'required|accepted'
+        ]);
+
+        $user = $request->user();
+
+        // Check if there is already a partnership request
+        $existing = PartnershipRequest::where('user_id', $user->id)->first();
+        if ($existing) {
+            return back()->with('error', 'You have already submitted a partnership request.');
+        }
+
+        // Generate the PDF
+        $date = now()->format('F d, Y');
+        $company_name = $request->input('company_name');
+        $website = $request->input('website');
+        $partnership_type = $request->input('partnership_type');
+        $signed_name = $request->input('signed_name');
+
+        // Compile HTML to PDF using Dompdf
+        $pdf = Pdf::loadView('pdf.partnership_agreement', [
+            'date' => $date,
+            'company_name' => $company_name,
+            'website' => $website,
+            'partnership_type' => $partnership_type,
+            'signed_name' => $signed_name,
+        ]);
+
+        $pdfOutput = $pdf->output();
+
+        // Save PDF to public folder
+        $filename = 'partnership_' . $user->id . '_' . time() . '.pdf';
+        $destinationPath = public_path('uploads/partnerships');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
+        $filePath = 'uploads/partnerships/' . $filename;
+        file_put_contents(public_path($filePath), $pdfOutput);
+
+        // Store request in database
+        $partnershipRequest = PartnershipRequest::create([
+            'user_id' => $user->id,
+            'company_name' => $company_name,
+            'website' => $website,
+            'partnership_type' => $partnership_type,
+            'business_description' => $request->input('business_description'),
+            'synergy_goals' => $request->input('synergy_goals'),
+            'expected_contribution' => $request->input('expected_contribution'),
+            'signed_name' => $signed_name,
+            'signed_at' => now(),
+            'status' => 'pending',
+            'pdf_path' => $filePath,
+        ]);
+
+        // Create notification for admin
+        \App\Models\AdminNotification::create([
+            'type' => 'partnership_request',
+            'title' => 'New Partnership Proposal from ' . $company_name,
+            'details' => [
+                'client_name' => $user->name,
+                'client_email' => $user->email,
+                'company_name' => $company_name,
+                'partnership_type' => $partnership_type,
+                'signed_name' => $signed_name,
+                'pdf_path' => $filePath,
+            ]
+        ]);
+
+        // Add to security/audit logs
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'event_type' => 'partnership_requested',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'details' => json_encode(['partnership_id' => $partnershipRequest->id, 'company_name' => $company_name])
+        ]);
+
+        // Email PDF to the client
+        try {
+            $toEmail = $user->email;
+            $subject = 'Your Diwebs Tech Agency Partnership Agreement';
+            \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($toEmail, $subject, $pdfOutput, $company_name) {
+                $message->to($toEmail)
+                    ->subject($subject)
+                    ->html(
+                        "<div style='font-family:sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #1E2125;background-color:#1E2125;color:#ffffff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.3);'>" .
+                        "<div style='text-align:center;margin-bottom:20px;'><img src='https://diwebstechagency.website/images/brand/diwebs-logo.svg' alt='Diwebs Logo' style='height:45px;' /></div>" .
+                        "<h2 style='color:#06b6d4;border-bottom:1px solid #0d9488;padding-bottom:10px;text-align:center;margin-top:0;'>Partnership Request Submitted Successfully</h2>" .
+                        "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Hello,</p>" .
+                        "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Thank you for submitting a strategic partnership proposal to <strong>Diwebs Tech Agency</strong> for <strong>{$company_name}</strong>.</p>" .
+                        "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>We have received your request and have attached a digitally compiled copy of your signed **Terms of Partnership Agreement** to this email. You can download and print it for your records.</p>" .
+                        "<p style='font-size:14px;line-height:1.6;color:#e2e8f0;'>Our Director of Partner Relations will review your proposal and get back to you with the next steps shortly.</p>" .
+                        "<p style='font-size:11px;color:#94a3b8;margin-top:40px;border-top:1px solid #334155;padding-top:15px;text-align:center;'>This is an automated operational email from the Diwebs Partner Program.</p>" .
+                        "</div>"
+                    )
+                    ->attachData($pdfOutput, 'Diwebs_Partnership_Agreement_' . str_replace(' ', '_', $company_name) . '.pdf', [
+                        'mime' => 'application/pdf',
+                    ]);
+            });
+        } catch (\Exception $e) {
+            logger()->error("Failed to email partnership agreement PDF to user: " . $e->getMessage());
+        }
+
+        return back()->with('success', 'Your partnership request has been submitted successfully! The signed agreement PDF was sent to your email address and is pending review.');
+    }
+
+    public function showCheckout(Request $request, $id)
+    {
+        $serviceRequest = ServiceRequest::where('client_id', $request->user()->id)->findOrFail($id);
+
+        // Extract budget amount
+        $budgetRange = $serviceRequest->budget_range;
+        preg_match('/\d[\d,.]*/', $budgetRange, $matches);
+        $amount = isset($matches[0]) ? (float)str_replace(',', '', $matches[0]) : 500.00;
+
+        // Gateways enabled check
+        $gateways = [
+            'stripe' => [
+                'name' => 'Stripe',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_stripe_enabled', true),
+                'icon' => '/images/brand/stripe.svg'
+            ],
+            'paystack' => [
+                'name' => 'Paystack',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_paystack_enabled', false),
+                'icon' => '/images/brand/paystack.svg'
+            ],
+            'flutterwave' => [
+                'name' => 'Flutterwave',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_flw_enabled', false),
+                'icon' => '/images/brand/flutterwave.svg'
+            ],
+            'paypal' => [
+                'name' => 'PayPal',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_paypal_enabled', false),
+                'icon' => '/images/brand/paypal.svg'
+            ],
+            'razorpay' => [
+                'name' => 'Razorpay',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_razorpay_enabled', false),
+                'icon' => '/images/brand/razorpay.svg'
+            ],
+            'coinbase' => [
+                'name' => 'Coinbase Commerce',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_coinbase_enabled', false),
+                'icon' => '/images/brand/coinbase.svg'
+            ],
+            'bank_transfer' => [
+                'name' => 'Bank Wire Transfer',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_bank_enabled', false),
+                'icon' => '/images/brand/bank.svg'
+            ],
+            'crypto' => [
+                'name' => 'Bitcoin / USDT',
+                'enabled' => \App\Helpers\SettingsHelper::get('payment_crypto_enabled', false),
+                'icon' => '/images/brand/bitcoin.svg'
+            ]
+        ];
+
+        return view('portal.checkout', compact('serviceRequest', 'amount', 'gateways'));
+    }
+
+    public function processCheckoutPay(Request $request, $id)
+    {
+        $serviceRequest = ServiceRequest::where('client_id', $request->user()->id)->findOrFail($id);
+
+        $request->validate([
+            'payment_method' => 'required|in:stripe,paystack,flutterwave,paypal,razorpay,coinbase,bank_transfer,crypto',
+            'payment_proof' => 'required_if:payment_method,crypto,bank_transfer|file|mimes:jpeg,png,jpg,gif,pdf|max:10240',
+            'payment_txid' => 'required_if:payment_method,crypto,bank_transfer|string|max:255'
+        ]);
+
+        // Parse amount
+        $budgetRange = $serviceRequest->budget_range;
+        preg_match('/\d[\d,.]*/', $budgetRange, $matches);
+        $amount = isset($matches[0]) ? (float)str_replace(',', '', $matches[0]) : 500.00;
+
+        $method = $request->input('payment_method');
+
+        if (in_array($method, ['crypto', 'bank_transfer'])) {
+            $proofPath = null;
+            if ($request->hasFile('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $destination = public_path('uploads/proofs');
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0777, true);
+                }
+                $file->move($destination, $filename);
+                $proofPath = 'uploads/proofs/' . $filename;
+            }
+
+            $serviceRequest->update([
+                'payment_method' => $method,
+                'payment_status' => 'pending',
+                'payment_amount' => $amount,
+                'payment_proof' => $proofPath,
+                'payment_txid' => $request->input('payment_txid'),
+                'status' => 'pending_verification'
+            ]);
+
+            \App\Models\AuditLog::create([
+                'user_id' => $request->user()->id,
+                'event_type' => 'payment_submitted',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'details' => json_encode(['service_request_id' => $serviceRequest->id, 'amount' => $amount, 'method' => $method])
+            ]);
+
+            \App\Models\UserNotification::create([
+                'user_id' => $request->user()->id,
+                'title' => 'Payment Proof Submitted',
+                'message' => 'Your payment proof for "' . $serviceRequest->title . '" has been submitted for verification.',
+                'type' => 'invoice',
+                'is_read' => false
+            ]);
+
+            \App\Models\AdminNotification::create([
+                'type' => 'payment_verification',
+                'title' => 'New Payment Proof: ' . $serviceRequest->title,
+                'details' => [
+                    'client_name' => $request->user()->name,
+                    'service_request_title' => $serviceRequest->title,
+                    'payment_method' => $method,
+                    'amount' => $amount,
+                    'txid' => $request->input('payment_txid')
+                ]
+            ]);
+
+            return redirect()->route('portal.dashboard')->with('success', 'Your payment proof has been submitted successfully. Our billing team will verify it and activate your project shortly!');
+        } else {
+            $serviceRequest->update([
+                'payment_method' => $method,
+                'payment_status' => 'paid',
+                'payment_amount' => $amount,
+                'status' => 'approved'
+            ]);
+
+            $project = Project::create([
+                'id' => (string) Str::uuid(),
+                'client_id' => $serviceRequest->client_id,
+                'title' => $serviceRequest->title,
+                'description' => $serviceRequest->description,
+                'status' => 'planning',
+                'budget' => $amount,
+                'is_validated' => true,
+                'agreement_signed_at' => null
+            ]);
+
+            $milestone = Milestone::create([
+                'project_id' => $project->id,
+                'title' => 'Initial Project Kickoff',
+                'description' => 'Initial sprint milestone set up on project checkout.',
+                'due_date' => now()->addDays(15),
+                'status' => 'pending',
+                'amount' => $amount
+            ]);
+
+            $invoice = Invoice::create([
+                'project_id' => $project->id,
+                'milestone_id' => $milestone->id,
+                'client_id' => $serviceRequest->client_id,
+                'amount' => $amount,
+                'invoice_number' => 'INV-' . date('Y') . '-' . strtoupper(Str::random(5)),
+                'status' => 'paid',
+                'due_date' => now()->addDays(15),
+                'paid_at' => now()
+            ]);
+
+            Contract::create([
+                'project_id' => $project->id,
+                'client_id' => $serviceRequest->client_id,
+                'title' => 'Service Agreement: ' . $project->title,
+                'content' => "This Service Agreement is entered into between Diwebs Tech Agency and the client. Project title: {$project->title}. Budget: " . \App\Helpers\PaymentHelper::format($project->budget) . "\n\nScope Description:\n{$project->description}",
+                'status' => 'pending_signature'
+            ]);
+
+            \App\Models\AuditLog::create([
+                'user_id' => $request->user()->id,
+                'event_type' => 'payment_success',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'details' => json_encode(['service_request_id' => $serviceRequest->id, 'project_id' => $project->id, 'amount' => $amount, 'method' => $method])
+            ]);
+
+            \App\Models\UserNotification::create([
+                'user_id' => $request->user()->id,
+                'title' => 'Payment Completed & Project Activated',
+                'message' => 'Your payment for "' . $serviceRequest->title . '" was successful! Project is now activated.',
+                'type' => 'project',
+                'is_read' => false
+            ]);
+
+            return redirect()->route('portal.dashboard')->with('success', 'Payment successful! Your project has been initialized. Please head to the "Digital Contracts" tab to sign your Service Agreement contract.');
+        }
     }
 }

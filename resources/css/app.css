@@ -77,6 +77,14 @@
 
 /* Touch accessibility & mobile optimization layer */
 @layer base {
+    /* Standard font family inheritance for all form controls */
+    input,
+    select,
+    textarea,
+    button {
+        font-family: var(--font-sans) !important;
+    }
+
     /* Safe notch spacing utilities */
     :root {
         --safe-top: env(safe-area-inset-top, 0px);
@@ -139,6 +147,21 @@
     header {
         padding-top: max(8px, env(safe-area-inset-top));
     }
+}
+
+/* Premium scrollbar styling for mockup scroll wrapper */
+.scrollbar-premium::-webkit-scrollbar {
+    width: 6px;
+}
+.scrollbar-premium::-webkit-scrollbar-track {
+    background: rgba(15, 17, 21, 0.4);
+}
+.scrollbar-premium::-webkit-scrollbar-thumb {
+    background: rgba(0, 194, 209, 0.3);
+    border-radius: 3px;
+}
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 194, 209, 0.6);
 }
 
 

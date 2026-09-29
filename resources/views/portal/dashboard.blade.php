@@ -3,8 +3,10 @@
 @section('title', 'Diwebs Client Workspace - Enterprise Collaboration Portal')
 
 @section('content')
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4" 
+<div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4" 
+     x-cloak
      x-data="{
+
         activeTab: 'dashboard',
         showSignatureModal: false,
         activeContractId: null,
@@ -36,7 +38,7 @@
             // Read hash parameters to binding tab switching
             if (window.location.hash) {
                 const tab = window.location.hash.substring(1);
-                if (['dashboard', 'projects', 'requests', 'milestones', 'files', 'contracts', 'billing', 'messages', 'tickets', 'notifications', 'team', 'settings', 'reviews', 'referrals'].includes(tab)) {
+                if (['dashboard', 'projects', 'requests', 'milestones', 'files', 'contracts', 'billing', 'messages', 'tickets', 'notifications', 'team', 'settings', 'reviews', 'referrals', 'partnership'].includes(tab)) {
                     this.activeTab = tab;
                 }
             }
@@ -133,7 +135,16 @@
         }
      }">
 
-    <div class="flex flex-col lg:flex-row gap-8">
+    <!-- Ambient Glowing Mesh Accents for Translucent Glassmorphic Backdrop -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10 select-none">
+        <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-brand-teal/10 blur-[100px] animate-float"></div>
+        <div class="absolute top-[30%] -right-24 w-96 h-96 rounded-full bg-brand-cyan/8 blur-[120px] animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[20%] -left-20 w-80 h-80 rounded-full bg-brand-teal/5 blur-[100px] animate-float" style="animation-delay: 4s;"></div>
+        <div class="absolute -bottom-24 right-12 w-[350px] h-[350px] rounded-full bg-brand-cyan/6 blur-[110px] animate-float" style="animation-delay: 6s;"></div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8 relative z-10">
+
         
         <!-- Left Sidebar Navigation Menu -->
         <aside class="w-full lg:w-72 flex-shrink-0">
@@ -145,47 +156,50 @@
                 </div>
                 
                 <nav class="space-y-1">
-                    <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>📊</span> Dashboard Overview
+                    <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 012-2h2a2 2 0 012 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 00-2-2h-3l-1-2H9L8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z"/></svg> Dashboard Overview
                     </button>
-                    <button @click="activeTab = 'projects'" :class="activeTab === 'projects' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>📂</span> My Projects
+                    <button @click="activeTab = 'projects'" :class="activeTab === 'projects' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg> My Projects
                     </button>
-                    <button @click="activeTab = 'requests'" :class="activeTab === 'requests' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>🚀</span> Service Requests
+                    <button @click="activeTab = 'requests'" :class="activeTab === 'requests' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Service Requests
                     </button>
-                    <button @click="activeTab = 'milestones'" :class="activeTab === 'milestones' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>🏆</span> Milestones &amp; Approvals
+                    <button @click="activeTab = 'milestones'" :class="activeTab === 'milestones' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg> Milestones &amp; Approvals
                     </button>
-                    <button @click="activeTab = 'files'" :class="activeTab === 'files' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>💾</span> Files &amp; Deliverables
+                    <button @click="activeTab = 'files'" :class="activeTab === 'files' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20"/></svg> Files &amp; Deliverables
                     </button>
-                    <button @click="activeTab = 'contracts'" :class="activeTab === 'contracts' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>✍️</span> Digital Contracts
+                    <button @click="activeTab = 'contracts'" :class="activeTab === 'contracts' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> Digital Contracts
                     </button>
-                    <button @click="activeTab = 'billing'" :class="activeTab === 'billing' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>💳</span> Invoices &amp; Payments
+                    <button @click="activeTab = 'billing'" :class="activeTab === 'billing' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Invoices &amp; Payments
                     </button>
-                    <button @click="activeTab = 'messages'" :class="activeTab === 'messages' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>💬</span> Collaboration Hub
+                    <button @click="activeTab = 'messages'" :class="activeTab === 'messages' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg> Collaboration Hub
                     </button>
-                    <button @click="activeTab = 'tickets'" :class="activeTab === 'tickets' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>🎟️</span> Support Helpdesk
+                    <button @click="activeTab = 'tickets'" :class="activeTab === 'tickets' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg> Support Helpdesk
                     </button>
-                    <button @click="activeTab = 'notifications'" :class="activeTab === 'notifications' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>🔔</span> Notifications
+                    <button @click="activeTab = 'notifications'" :class="activeTab === 'notifications' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg> Notifications
                     </button>
-                    <button @click="activeTab = 'team'" :class="activeTab === 'team' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>👥</span> Team Access
+                    <button @click="activeTab = 'team'" :class="activeTab === 'team' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg> Team Access
                     </button>
-                    <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>⚙️</span> Settings &amp; Security
+                    <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Settings &amp; Security
                     </button>
-                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>⭐</span> Write a Review
+                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg> Write a Review
                     </button>
-                    <button @click="activeTab = 'referrals'" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-lg transition-all text-left">
-                        <span>🤝</span> Referral Program
+                    <button @click="activeTab = 'referrals'" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg> Referral Program
+                    </button>
+                    <button @click="activeTab = 'partnership'" :class="activeTab === 'partnership' ? 'bg-brand-teal/20 text-brand-cyan border-l-4 border-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5 hover:text-brand-white'" class="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Partnership Program
                     </button>
                 </nav>
             </div>
@@ -222,7 +236,8 @@
                                       activeTab === 'team' ? '👥' : 
                                       activeTab === 'settings' ? '⚙️' : 
                                       activeTab === 'reviews' ? '⭐' : 
-                                      activeTab === 'referrals' ? '🤝' : ''"></span>
+                                      activeTab === 'referrals' ? '🤝' : 
+                                      activeTab === 'partnership' ? '🤝' : ''"></span>
                         <span x-text="activeTab === 'dashboard' ? 'Dashboard Overview' : 
                                       activeTab === 'projects' ? 'My Projects' : 
                                       activeTab === 'requests' ? 'Service Requests' : 
@@ -236,7 +251,8 @@
                                       activeTab === 'team' ? 'Team Access' : 
                                       activeTab === 'settings' ? 'Settings & Security' : 
                                       activeTab === 'reviews' ? 'Write a Review' : 
-                                      activeTab === 'referrals' ? 'Referral Program' : ''"></span>
+                                      activeTab === 'referrals' ? 'Referral Program' : 
+                                      activeTab === 'partnership' ? 'Partnership Program' : ''"></span>
                     </span>
                     <span class="text-[9px] text-brand-gray bg-brand-teal/10 px-2 py-0.5 rounded font-mono uppercase">Active</span>
                 </div>
@@ -285,6 +301,9 @@
                     <button @click="activeTab = 'referrals'; mobileOpen = false;" :class="activeTab === 'referrals' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
                         <span>🤝</span> Referral Program
                     </button>
+                    <button @click="activeTab = 'partnership'; mobileOpen = false;" :class="activeTab === 'partnership' ? 'bg-brand-teal/20 text-brand-cyan' : 'text-brand-gray hover:bg-brand-teal/5'" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all text-left">
+                        <span>🤝</span> Partnership Program
+                    </button>
                 </div>
             </div>
         </aside>
@@ -305,23 +324,24 @@
 
                 <!-- KPI Widgets grid -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                    <div class="glass-card glass-card-hover rounded-2xl p-5 border border-brand-teal/10">
                         <span class="text-[10px] uppercase font-bold text-brand-gray">Active Projects</span>
                         <div class="text-2xl font-extrabold text-brand-white mt-1">{{ $projects->count() }}</div>
                     </div>
-                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                    <div class="glass-card glass-card-hover rounded-2xl p-5 border border-brand-teal/10">
                         <span class="text-[10px] uppercase font-bold text-brand-gray">Milestone Progress</span>
                         <div class="text-2xl font-extrabold text-brand-cyan mt-1">{{ $taskCompletionRate }}%</div>
                     </div>
-                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                    <div class="glass-card glass-card-hover rounded-2xl p-5 border border-brand-teal/10">
                         <span class="text-[10px] uppercase font-bold text-brand-gray">Outstanding Invoices</span>
                         <div class="text-2xl font-extrabold text-rose-400 mt-1">{{ $unpaidInvoices->count() }}</div>
                     </div>
-                    <div class="glass-card rounded-2xl p-5 border border-brand-teal/10">
+                    <div class="glass-card glass-card-hover rounded-2xl p-5 border border-brand-teal/10">
                         <span class="text-[10px] uppercase font-bold text-brand-gray">SLA Support Uptime</span>
                         <div class="text-2xl font-extrabold text-emerald-400 mt-1">99.98%</div>
                     </div>
                 </div>
+
 
                 <!-- Main Layout splits -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -507,6 +527,110 @@
                                 </div>
                             </div>
 
+                            <!-- Visual Step Stepper -->
+                            <div class="mt-4 p-4 bg-brand-dark-secondary/20 border border-brand-teal/5 rounded-xl space-y-4">
+                                <div class="relative">
+                                    <!-- Line -->
+                                    <div class="absolute top-4 left-6 right-6 h-0.5 bg-[#25282D] -z-10">
+                                        <div class="h-full bg-brand-cyan transition-all duration-300"
+                                             style="width: {{ !$project->is_validated ? '0%' : (!$project->payment_made ? '33%' : (empty($project->agreement_signed_at) ? '66%' : '100%')) }};"></div>
+                                    </div>
+
+                                    <div class="grid grid-cols-4 text-center">
+                                        <!-- Step 1: Scoped -->
+                                        <div class="flex flex-col items-center">
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-[10px]
+                                                {{ $project->is_validated ? 'bg-brand-teal/20 border-2 border-brand-teal text-brand-cyan' : 'bg-brand-cyan/20 border-2 border-brand-cyan text-brand-cyan animate-pulse' }}">
+                                                <span>✔</span>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-brand-white mt-1">1. Scope</span>
+                                        </div>
+
+                                        <!-- Step 2: Deposit -->
+                                        <div class="flex flex-col items-center">
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-[10px]
+                                                @if(!$project->is_validated) bg-[#1A1D21] border-2 border-[#25282D] text-brand-gray
+                                                @elseif(!$project->payment_made) bg-brand-cyan/20 border-2 border-brand-cyan text-brand-cyan animate-pulse
+                                                @else bg-brand-teal/20 border-2 border-brand-teal text-brand-cyan
+                                                @endif">
+                                                <span>💳</span>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-brand-white mt-1">2. Payment</span>
+                                        </div>
+
+                                        <!-- Step 3: Signature -->
+                                        <div class="flex flex-col items-center">
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-[10px]
+                                                @if(!$project->payment_made) bg-[#1A1D21] border-2 border-[#25282D] text-brand-gray
+                                                @elseif(empty($project->agreement_signed_at)) bg-brand-cyan/20 border-2 border-brand-cyan text-brand-cyan animate-pulse
+                                                @else bg-brand-teal/20 border-2 border-brand-teal text-brand-cyan
+                                                @endif">
+                                                <span>✍</span>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-brand-white mt-1">3. Contract</span>
+                                        </div>
+
+                                        <!-- Step 4: Active -->
+                                        <div class="flex flex-col items-center">
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-[10px]
+                                                @if(empty($project->agreement_signed_at)) bg-[#1A1D21] border-2 border-[#25282D] text-brand-gray
+                                                @else bg-brand-teal/20 border-2 border-brand-teal text-brand-cyan
+                                                @endif">
+                                                <span>🚀</span>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-brand-white mt-1">4. Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Stepper Info & Action Button -->
+                                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 border-t border-brand-teal/5">
+                                    <div class="text-[11px] text-brand-gray text-center sm:text-left">
+                                        @if(!$project->is_validated)
+                                            <span>🛡️ **Next Step**: Awaiting technical scope validation from Diwebs Admin.</span>
+                                        @elseif(!$project->payment_made)
+                                            <span>💳 **Next Step**: Please complete your kickoff deposit payment.</span>
+                                        @elseif(empty($project->agreement_signed_at))
+                                            <span>✍️ **Next Step**: Review and sign your Service Agreement contract.</span>
+                                        @else
+                                            <span class="text-emerald-400">🚀 **Status**: Project is active and in development. Check sprint progress below!</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        @if(!$project->is_validated)
+                                            <button disabled class="rounded-lg bg-[#25282D] text-brand-gray text-[10px] font-bold uppercase tracking-wider px-3.5 py-2">Awaiting Validation</button>
+                                        @elseif(!$project->payment_made)
+                                            <button @click="activeTab = 'billing'; window.location.hash = 'billing';" class="rounded-lg bg-emerald-500/10 border border-emerald-500/35 text-emerald-400 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 shadow-md">
+                                                Settle Deposit
+                                            </button>
+                                        @elseif(empty($project->agreement_signed_at))
+                                            <button @click="activeTab = 'contracts'; window.location.hash = 'contracts';" class="rounded-lg bg-brand-cyan/20 border border-brand-cyan/35 text-brand-cyan text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 hover:bg-brand-cyan/30 transition-all flex items-center gap-1.5 shadow-md font-extrabold">
+                                                Sign Agreement
+                                            </button>
+                                        @else
+                                            <a href="{{ route('portal.project', $project->id) }}" class="rounded-lg bg-brand-teal/10 border border-brand-teal/30 hover:bg-brand-teal/20 text-brand-cyan text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 transition-all block text-center">
+                                                Manage Sprints →
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($project->pipeline_note)
+                                <div class="p-4 bg-[#1A1D21]/60 border border-brand-cyan/30 rounded-xl relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 w-24 h-24 bg-brand-cyan/5 rounded-full blur-2xl"></div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-base">📢</span>
+                                        <div>
+                                            <span class="text-[9px] uppercase font-bold text-brand-cyan tracking-wider block mb-0.5">Latest Pipeline Status Note</span>
+                                            <p class="text-xs text-brand-white leading-relaxed italic pr-2">
+                                                {!! nl2br(e($project->pipeline_note)) !!}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             @if($project->is_validated && $project->payment_made)
                                 <!-- Success Rate for Web Development -->
                                 @if($project->service_type === 'Website Development' || $project->service_type === 'Web Development')
@@ -526,9 +650,14 @@
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-brand-gray block">Assigned Technical Team</span>
                                         <div class="mt-2 space-y-1.5 text-xs text-brand-white">
-                                            <div class="flex items-center gap-2">👤 <strong>Jude Carter</strong> <span class="text-[10px] text-brand-gray">(Project Manager)</span></div>
-                                            <div class="flex items-center gap-2">👤 <strong>Amina Yusuf</strong> <span class="text-[10px] text-brand-gray">(Tech Lead)</span></div>
-                                            <div class="flex items-center gap-2">👤 <strong>Tobi Alabi</strong> <span class="text-[10px] text-brand-gray">(QA Analyst)</span></div>
+                                            @forelse($project->assignments as $assignment)
+                                                <div class="flex items-center gap-2">
+                                                    👤 <strong>{{ $assignment->staff->name }}</strong> 
+                                                    <span class="text-[10px] text-brand-gray">({{ $assignment->role }})</span>
+                                                </div>
+                                            @empty
+                                                <div class="text-brand-gray italic text-[10px] mt-1">No technical team assigned yet.</div>
+                                            @endforelse
                                         </div>
                                     </div>
 
@@ -779,31 +908,58 @@
                     <div class="glass-card rounded-2xl p-6 border border-brand-teal/25 space-y-4">
                         <h3 class="text-sm font-bold text-brand-white">Upload Project File</h3>
                         
-                        <!-- Drag & Drop container simulation -->
-                        <form action="{{ route('portal.project.upload', $projects->first()?->id ?? 1) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                            @csrf
-                            <div class="border-2 border-dashed border-brand-teal/20 rounded-xl p-6 text-center hover:border-brand-cyan/40 transition-all relative">
-                                <input type="file" name="project_file" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                <span class="text-2xl block mb-2">📁</span>
-                                <span class="text-xs font-semibold text-brand-white block">Drag and drop file here</span>
-                                <span class="text-[9px] text-brand-gray mt-1 block">Maximum upload file size: 15MB</span>
+                        @if($projects->isEmpty())
+                            <div class="p-8 text-center text-brand-gray text-xs border border-dashed border-brand-teal/15 rounded-xl">
+                                📁 No active projects found. You can upload specification files and assets once your project is initiated or active.
                             </div>
+                        @else
+                            <form action="{{ route('portal.project.upload', $projects->first()->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4"
+                                  x-data="{ 
+                                      filename: '',
+                                      updateFile(e) {
+                                          if (e.target.files.length > 0) {
+                                              this.filename = e.target.files[0].name;
+                                          }
+                                      }
+                                  }">
+                                @csrf
+                                
+                                @if($projects->count() > 1)
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Select Target Project</label>
+                                        <select required class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D] px-4 py-3 text-xs text-brand-white focus:border-brand-cyan focus:outline-none transition-all"
+                                                @change="$el.form.action = '/portal/project/' + $el.value + '/upload'">
+                                            @foreach($projects as $p)
+                                                <option value="{{ $p->id }}">{{ $p->title }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
 
-                            <div>
-                                <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Destination Directory Folder</label>
-                                <select name="folder" required class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D] px-4 py-3 text-xs text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
-                                    <option value="assets">Assets &amp; Specification sheets</option>
-                                    <option value="contracts">Legal Contracts &amp; Proposals</option>
-                                    <option value="deliverables">Sprints Deliverables packages</option>
-                                    <option value="reports">Telemetry &amp; Audit reports</option>
-                                    <option value="backups">Database &amp; Source Backups</option>
-                                </select>
-                            </div>
+                                <div class="border-2 border-dashed border-brand-teal/20 rounded-xl p-6 text-center hover:border-brand-cyan/40 transition-all relative"
+                                     :class="filename ? 'border-brand-cyan bg-brand-cyan/5' : ''">
+                                    <input type="file" name="project_file" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="updateFile($event)">
+                                    <span class="text-2xl block mb-2" x-text="filename ? '📄' : '📁'"></span>
+                                    <span class="text-xs font-semibold text-brand-white block" x-text="filename ? filename : 'Drag and drop file here or click to browse'"></span>
+                                    <span class="text-[9px] text-brand-gray mt-1 block">Maximum upload file size: 15MB</span>
+                                </div>
 
-                            <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary font-bold text-xs py-3.5 hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                                📤 Upload Package
-                            </button>
-                        </form>
+                                <div>
+                                    <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Destination Directory Folder</label>
+                                    <select name="folder" required class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D] px-4 py-3 text-xs text-brand-white focus:border-brand-cyan focus:outline-none transition-all">
+                                        <option value="assets">Assets &amp; Specification sheets</option>
+                                        <option value="contracts">Legal Contracts &amp; Proposals</option>
+                                        <option value="deliverables">Sprints Deliverables packages</option>
+                                        <option value="reports">Telemetry &amp; Audit reports</option>
+                                        <option value="backups">Database &amp; Source Backups</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary font-bold text-xs py-3.5 hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                    📤 Upload Package
+                                </button>
+                            </form>
+                        @endif
                     </div>
 
                     <!-- Right: Directory Browser -->
@@ -934,24 +1090,10 @@
                         @forelse($unpaidInvoices as $invoice)
                             @php
                                 $baseAmount = $invoice->amount;
-                                $symbol = \App\Helpers\SettingsHelper::get('payment_currency_symbol', '$');
-                                $position = \App\Helpers\SettingsHelper::get('payment_currency_position', 'before');
-                                $exchangeRate = 1.0;
-                                
-                                if (auth()->check()) {
-                                    $user = auth()->user();
-                                    $country = strtolower(trim($user->country ?? ''));
-                                    if ($country === 'nigeria') {
-                                        $symbol = '₦';
-                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_ngn', 1500.00);
-                                    } elseif (in_array($country, ['united kingdom', 'uk', 'gb', 'great britain'])) {
-                                        $symbol = '£';
-                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_gbp', 0.80);
-                                    } elseif (in_array($country, ['europe', 'germany', 'france', 'italy', 'spain', 'netherlands', 'belgium', 'ireland'])) {
-                                        $symbol = '€';
-                                        $exchangeRate = (float)\App\Helpers\SettingsHelper::get('currency_exchange_rate_eur', 0.92);
-                                    }
-                                }
+                                $regionInfo = \App\Helpers\PaymentHelper::getRegionInfo(auth()->user()->country ?? null);
+                                $symbol = $regionInfo['symbol'];
+                                $exchangeRate = $regionInfo['rate'];
+                                $currencyCode = $regionInfo['currency'];
                                 
                                 $localInvoiceAmount = $baseAmount * $exchangeRate;
                                 $taxRate = (float)\App\Helpers\SettingsHelper::get('payment_tax_rate', 0.0);
@@ -1557,10 +1699,26 @@
                                                 @endfor
                                             </div>
                                         </div>
-                                        <span class="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] text-emerald-400 font-bold uppercase">{{ $rev->status }}</span>
+                                        <span class="rounded px-2 py-0.5 text-[9px] font-bold uppercase
+                                            @if($rev->status === 'approved') bg-emerald-950 text-emerald-400 border border-emerald-500/20
+                                            @else bg-amber-950 text-amber-400 border border-amber-500/20
+                                            @endif">
+                                            {{ $rev->status }}
+                                        </span>
                                     </div>
                                     <p class="text-[10px] text-brand-gray leading-relaxed font-light italic">"{{ $rev->comment }}"</p>
                                     <span class="text-[8px] text-brand-gray block">{{ $rev->created_at->format('M d, Y') }}</span>
+                                    
+                                    @if($rev->status === 'approved')
+                                        <div class="pt-2">
+                                            <a href="{{ \App\Helpers\SettingsHelper::get('google_reviews_url', 'https://www.google.com/search?q=diwebs+tech+agency+review') }}" 
+                                               target="_blank" 
+                                               rel="noopener"
+                                               class="inline-flex items-center gap-1.5 rounded-lg bg-[#25282D]/85 border border-brand-teal/20 px-3 py-1.5 text-[9px] font-bold text-brand-cyan hover:bg-brand-teal/10 hover:border-brand-cyan transition-all">
+                                                <span>🌐</span> Share on Google Reviews
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             @empty
                                 <p class="text-xs text-brand-gray text-center py-4">No reviews submitted yet.</p>
@@ -1675,6 +1833,171 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- ════════════════════════════════════════
+                 TAB: PARTNERSHIP PROGRAM
+                 ════════════════════════════════════════ -->
+            <div x-show="activeTab === 'partnership'" class="space-y-6" style="display: none;">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden border border-brand-teal/15">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-2xl"></div>
+                    <h2 class="text-xl font-bold text-brand-white">Ecosystem Partnership Program</h2>
+                    <p class="text-xs text-brand-gray mt-1 leading-relaxed">Collaborate with Diwebs Tech Agency to drive innovation, share resource capability, and deliver elite technological solutions.</p>
+                </div>
+
+                @if(!$partnershipRequest)
+                    <!-- Digital Form and Terms Accordion -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left 2 columns: Digital Form -->
+                        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-brand-teal/20 space-y-6">
+                            <div>
+                                <h3 class="text-sm font-bold text-brand-white">Strategic Partnership Application</h3>
+                                <p class="text-[11px] text-brand-gray mt-1">Submit your organizational capabilities and synergy goals to start onboarding.</p>
+                            </div>
+
+                            <form action="{{ route('portal.partnership.apply') }}" method="POST" class="space-y-4">
+                                @csrf
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Company / Organization Name</label>
+                                        <input type="text" name="company_name" required value="{{ old('company_name') }}" placeholder="e.g. Acme Tech Solutions" class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Corporate Website URL</label>
+                                        <input type="url" name="website" value="{{ old('website') }}" placeholder="e.g. https://acme.com" class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Proposed Partnership Classification</label>
+                                    <select name="partnership_type" required class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">
+                                        <option value="Technology Partner">Technology Partner (Software, Integrations & Systems)</option>
+                                        <option value="Co-Marketing Partner">Co-Marketing Partner (Branding, Events & Media)</option>
+                                        <option value="Referral Partner">Referral Partner (Client Acquisition & Commission)</option>
+                                        <option value="Reseller Partner">Reseller Partner (Value-added Reselling of Solutions)</option>
+                                        <option value="Strategic Alliance">Strategic Alliance (Joint Ventures & Resource Sharing)</option>
+                                        <option value="Other">Other / Custom Collaboration Model</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Business Scope & Capability Description</label>
+                                    <textarea name="business_description" required rows="3" placeholder="Briefly describe your company's core services, target market, and technical specialties..." class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">{{ old('business_description') }}</textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Synergy Goals (Why partner with Diwebs?)</label>
+                                        <textarea name="synergy_goals" required rows="3" placeholder="What key goals do you aim to achieve through this partnership? (e.g. launch new product, expand reach)" class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">{{ old('synergy_goals') }}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Expected Mutual Value Contribution</label>
+                                        <textarea name="expected_contribution" required rows="3" placeholder="Detail what capabilities, services, or market resources your company will contribute to the relationship..." class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">{{ old('expected_contribution') }}</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-brand-dark-secondary/40 border border-brand-teal/15 rounded-xl space-y-4">
+                                    <h4 class="text-xs font-bold text-brand-cyan uppercase tracking-wider">E-Signature & Declaration</h4>
+                                    
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" name="agree_terms" required id="agree_partnership_terms" value="1" class="mt-1 accent-brand-cyan w-4 h-4 rounded border-brand-teal/20 bg-brand-dark-secondary">
+                                        <label for="agree_partnership_terms" class="text-xs text-brand-gray leading-relaxed cursor-pointer select-none">
+                                            I declare that I have read the complete <strong>Terms of Partnership</strong> document on the right pane, agree to bind my organization to its legal conditions, and authorize Diwebs to perform baseline diligence reviews.
+                                        </label>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] text-brand-gray font-bold uppercase tracking-wider mb-2">Authorized Signatory Name</label>
+                                        <input type="text" name="signed_name" required value="{{ old('signed_name') }}" placeholder="Type your full name to sign this agreement" class="w-full rounded-xl border border-brand-teal/20 bg-brand-dark px-4 py-3 text-xs text-brand-white focus:outline-none focus:border-brand-cyan transition-all">
+                                        <span class="text-[9px] text-brand-gray block mt-1.5 leading-relaxed">Your typed name serves as an official legal electronic seal under applicable regional acts.</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary font-bold text-xs py-3.5 hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                    🤝 Sign & Submit Partnership Request
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right 1 column: Terms of Partnership document viewer -->
+                        <div class="lg:col-span-1 glass-card rounded-2xl p-6 border border-brand-teal/15 flex flex-col justify-between h-[650px]">
+                            <div class="flex flex-col h-full">
+                                <h3 class="text-sm font-bold text-brand-white mb-3">Terms of Partnership</h3>
+                                
+                                <div class="flex-grow overflow-y-auto p-4 bg-brand-dark-secondary/50 border border-brand-teal/10 rounded-xl text-[10px] text-brand-gray leading-relaxed space-y-4">
+                                    <div class="text-center font-bold text-brand-cyan uppercase text-xs mb-2">Diwebs Partner Agreement</div>
+                                    <p><strong>1. Objectives:</strong> The Agency and the Partner agree to collaborate on technology development, co-marketing, resource sharing, and referral acquisition.</p>
+                                    <p><strong>2. Services & Referral:</strong> The Partner may refer technical software development, app design, or system integration jobs to Diwebs. Compensation splits are defined under specific project agreements.</p>
+                                    <p><strong>3. Non-Circumvention:</strong> Neither party shall directly solicit, engage, or circumvent the other party's referred clients or developers for personal direct benefit.</p>
+                                    <p><strong>4. Confidentiality:</strong> Both parties agree to protect proprietary source code, credentials, strategic roadmaps, and personal details exchanged during collaboration.</p>
+                                    <p><strong>5. Intellectual Property:</strong> Pre-existing IP remains with the respective originators. Joint software execution IP is specified per project Statement of Works (SOWs).</p>
+                                    <p><strong>6. Termination:</strong> Either party can terminate this agreement with 30 days written notice. Existing client contract obligations survive termination.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-[9px] text-brand-gray border-t border-brand-teal/10 pt-3">
+                                ℹ️ Scroll to view all terms. Agreement details will be compiled into a printable PDF upon submission.
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- Existing request status view -->
+                    <div class="glass-card rounded-2xl p-8 border border-brand-teal/20 text-center space-y-6 max-w-2xl mx-auto">
+                        <div class="text-5xl">🤝</div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-brand-white">Partnership Application Details</h3>
+                            <p class="text-xs text-brand-gray mt-1">Submitted on {{ $partnershipRequest->created_at->format('M d, Y @ H:i') }}</p>
+                        </div>
+
+                        <div class="p-6 bg-brand-dark-secondary/50 border border-brand-teal/10 rounded-2xl space-y-4 max-w-md mx-auto text-left text-xs text-brand-white">
+                            <div class="flex justify-between border-b border-brand-teal/5 pb-2">
+                                <span class="text-brand-gray">Organization Name:</span>
+                                <strong>{{ $partnershipRequest->company_name }}</strong>
+                            </div>
+                            <div class="flex justify-between border-b border-brand-teal/5 pb-2">
+                                <span class="text-brand-gray">Classification:</span>
+                                <strong>{{ $partnershipRequest->partnership_type }}</strong>
+                            </div>
+                            <div class="flex justify-between border-b border-brand-teal/5 pb-2">
+                                <span class="text-brand-gray">E-Signed By:</span>
+                                <strong class="text-brand-cyan">{{ $partnershipRequest->signed_name }}</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-brand-gray">Diligence Status:</span>
+                                <strong class="uppercase
+                                    @if($partnershipRequest->status === 'approved') text-emerald-400
+                                    @elseif($partnershipRequest->status === 'declined') text-rose-400
+                                    @else text-amber-400 animate-pulse
+                                    @endif">
+                                    {{ $partnershipRequest->status }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 space-y-3">
+                            @if($partnershipRequest->pdf_path)
+                                <a href="/{{ $partnershipRequest->pdf_path }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-brand-dark-secondary px-6 py-3 font-bold text-xs hover:opacity-90 transition-all shadow-md">
+                                    📄 Print / Download Signed Agreement (PDF)
+                                </a>
+                            @endif
+
+                            @if($partnershipRequest->status === 'pending')
+                                <p class="text-[11px] text-brand-gray italic leading-relaxed max-w-sm mx-auto">
+                                    Our Director of Partner Relations is reviewing your capabilities. A verified representative will reach out to you within 24-48 business hours.
+                                </p>
+                            @elseif($partnershipRequest->status === 'approved')
+                                <p class="text-[11px] text-emerald-400 font-bold leading-relaxed max-w-sm mx-auto">
+                                    ✓ Strategic Partnership Agreement verified and finalized. Welcome to the Diwebs Technology Ecosystem.
+                                </p>
+                            @else
+                                <p class="text-[11px] text-rose-400 font-bold leading-relaxed max-w-sm mx-auto">
+                                    Your application was declined at this time. Please contact partner support for detailed feedback.
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
 
         </main>

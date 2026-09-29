@@ -18,6 +18,21 @@
                     💳 Project is validated, but initial payment has not been made. Please complete the digital agreement signature under the <strong>Digital Contracts</strong> tab and pay the initialization invoice under <strong>Invoices &amp; Payments</strong> on your dashboard to unlock sprint tracking and telemetry features.
                 @endif
             </p>
+
+            @if($project->pipeline_note)
+                <div class="p-4 bg-[#1A1D21]/60 border border-brand-cyan/30 rounded-xl text-left relative overflow-hidden max-w-lg mx-auto">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-brand-cyan/5 rounded-full blur-2xl"></div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-base">📢</span>
+                        <div>
+                            <span class="text-[9px] uppercase font-bold text-brand-cyan tracking-wider block mb-0.5">Latest Pipeline Status Note</span>
+                            <p class="text-xs text-brand-white leading-relaxed italic pr-2">
+                                {!! nl2br(e($project->pipeline_note)) !!}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
             
             <div class="flex justify-center gap-3">
                 <a href="{{ route('portal.dashboard') }}" class="rounded-xl bg-brand-dark-secondary border border-brand-teal/15 text-brand-white font-semibold text-xs px-6 py-3.5 hover:bg-brand-dark transition-all">
@@ -42,6 +57,25 @@
                 {{ $project->status }}
             </span>
         </div>
+
+        @if($project->pipeline_note)
+            <!-- Project status pipeline note -->
+            <div class="glass-card rounded-2xl p-6 border border-brand-cyan/30 mb-8 relative overflow-hidden bg-brand-dark-secondary/60">
+                <div class="absolute right-0 top-0 w-48 h-48 bg-brand-cyan/5 rounded-full blur-3xl"></div>
+                <div class="flex items-start gap-4">
+                    <div class="p-3 rounded-xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan text-lg flex-shrink-0">
+                        📢
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[9px] font-mono text-brand-cyan uppercase tracking-wider block font-bold">Latest Pipeline Status Note</span>
+                        <p class="text-xs text-brand-white font-medium leading-relaxed italic pr-4">
+                            {!! nl2br(e($project->pipeline_note)) !!}
+                        </p>
+                        <span class="text-[9px] text-brand-gray block mt-2">Posted by Project Administrator • Direct from Diwebs Tech Agency Command Center</span>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         @if($project->service_type === 'Website Development' || $project->service_type === 'Web Development')
             <!-- Premium success rate header banner -->

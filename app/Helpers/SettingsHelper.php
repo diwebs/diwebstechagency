@@ -36,16 +36,24 @@ class SettingsHelper
 
     public static function get($key, $default = null)
     {
-        // Check cache first
-        if (cache()->has($key)) {
-            return cache($key);
+        try {
+            // Check cache first
+            if (cache()->has($key)) {
+                return cache($key);
+            }
+        } catch (\Throwable $e) {
+            // Cache store unavailable or database not yet migrated
         }
 
         // Check settings.json next
         $settings = self::load();
         if (array_key_exists($key, $settings)) {
-            // Restore to cache
-            cache([$key => $settings[$key]]);
+            try {
+                // Restore to cache
+                cache([$key => $settings[$key]]);
+            } catch (\Throwable $e) {
+                // Cache store failed
+            }
             return $settings[$key];
         }
 
@@ -54,8 +62,12 @@ class SettingsHelper
 
     public static function set($key, $value)
     {
-        // Update cache
-        cache([$key => $value]);
+        try {
+            // Update cache
+            cache([$key => $value]);
+        } catch (\Throwable $e) {
+            // Cache store failed
+        }
 
         // Update settings.json
         $settings = self::load();

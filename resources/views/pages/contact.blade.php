@@ -18,7 +18,7 @@
             <h3 class="text-xl font-bold text-brand-cyan mb-4 font-sans">Corporate Contacts</h3>
             <p class="text-sm text-brand-gray">
                 <strong>Address:</strong><br>
-                102 Herbert Macaulay Way, Yaba, Lagos, Nigeria<br><br>
+                Abuja, Nigeria<br><br>
                 <strong>Email:</strong> info.diwebs@gmail.com<br>
                 <strong>Compliance Email:</strong> compliance@diwebstechagency.website<br>
                 <strong>Phone:</strong> +234 9064130817

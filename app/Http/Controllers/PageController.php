@@ -37,6 +37,47 @@ class PageController extends Controller
         return view('pages.portfolio', compact('portfolios'));
     }
 
+    public function docs($slug = 'welcome')
+    {
+        $sections = [
+            'welcome' => [
+                'title' => 'Welcome & Overview',
+                'icon' => '👋',
+                'view' => 'pages.docs.welcome'
+            ],
+            'client-guide' => [
+                'title' => 'Client Portal Guide',
+                'icon' => '💼',
+                'view' => 'pages.docs.client-guide'
+            ],
+            'academy-guide' => [
+                'title' => 'Academy LMS Guide',
+                'icon' => '🎓',
+                'view' => 'pages.docs.academy-guide'
+            ],
+            'cbt-guide' => [
+                'title' => 'CBT Assessment Guide',
+                'icon' => '📝',
+                'view' => 'pages.docs.cbt-guide'
+            ],
+            'tech-principles' => [
+                'title' => 'Security & Tech Standards',
+                'icon' => '🛡️',
+                'view' => 'pages.docs.tech-principles'
+            ],
+        ];
+
+        if (!array_key_exists($slug, $sections)) {
+            abort(404);
+        }
+
+        return view('pages.docs.layout', [
+            'sections' => $sections,
+            'currentSlug' => $slug,
+            'currentSection' => $sections[$slug]
+        ]);
+    }
+
     public function caseStudies()
     {
         return view('pages.case-studies');
@@ -65,6 +106,21 @@ class PageController extends Controller
 
         Lead::create($validated);
 
+        \App\Models\CrmLead::firstOrCreate(
+            ['email' => $validated['email']],
+            [
+                'full_name' => $validated['name'],
+                'company_name' => $validated['company'] ?? null,
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
+                'source' => 'Website Contact Form',
+                'service_interest' => $validated['service_needed'] ?? 'General Inquiry',
+                'status' => 'New',
+                'lead_score' => 20,
+                'notes' => $validated['message'] ?? null
+            ]
+        );
+
         \App\Models\AdminNotification::create([
             'type' => 'contact_form',
             'title' => 'New Contact Lead: ' . $validated['name'],
@@ -84,7 +140,7 @@ class PageController extends Controller
             [
                 'title' => 'Senior Laravel Backend Engineer',
                 'department' => 'Engineering',
-                'location' => 'Lagos, Nigeria / Hybrid',
+                'location' => 'Abuja, Nigeria / Hybrid',
                 'type' => 'Full-time',
                 'description' => 'Join our core engineering team to build scalable multi-tenant SaaS architectures and robust exam platforms. Experience with Laravel, Redis, and MySQL optimization required.',
             ],
@@ -98,7 +154,7 @@ class PageController extends Controller
             [
                 'title' => 'Infrastructure & DevOps Lead',
                 'department' => 'Operations',
-                'location' => 'Lagos, Nigeria / On-site',
+                'location' => 'Abuja, Nigeria / On-site',
                 'type' => 'Full-time',
                 'description' => 'Oversee continuous deployment pipelines, optimize AWS/Azure cloud nodes, and manage local-area offline sync architectures for high-capacity CBT centers.',
             ]

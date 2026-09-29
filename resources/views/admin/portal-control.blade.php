@@ -183,32 +183,165 @@
                         <tr>
                             <th class="pb-3">Client</th>
                             <th class="pb-3">Request Summary</th>
-                            <th class="pb-3">Segment Category</th>
-                            <th class="pb-3">Budget Range</th>
-                            <th class="pb-3">Target Date</th>
-                            <th class="pb-3 text-right">CRM Status</th>
+                            <th class="pb-3">Budget &amp; Deadline</th>
+                            <th class="pb-3">Payment Info</th>
+                            <th class="pb-3 text-center">Status</th>
+                            <th class="pb-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-brand-teal/5 text-brand-white">
                         @forelse($serviceRequests as $req)
                             <tr>
-                                <td class="py-3 font-semibold">{{ $req->client->name }}</td>
+                                <td class="py-3 font-semibold">
+                                    {{ $req->client->name }}
+                                    <div class="text-[9px] text-brand-gray font-mono">{{ $req->client->email }}</div>
+                                </td>
                                 <td class="py-3 text-brand-gray">
                                     <div class="font-semibold text-brand-white">{{ $req->title }}</div>
                                     <div class="text-[10px] text-brand-gray">{{ Str::limit($req->description, 50) }}</div>
                                 </td>
-                                <td class="py-3 text-brand-cyan text-[10px] font-bold uppercase">{{ $req->service_type }}</td>
-                                <td class="py-3 font-mono">{{ $req->budget_range }}</td>
-                                <td class="py-3 text-brand-gray">{{ $req->deadline->format('M d, Y') }}</td>
+                                <td class="py-3 text-brand-gray">
+                                    <div class="font-bold text-brand-white">{{ $req->budget_range }}</div>
+                                    <div class="text-[9px] text-brand-cyan uppercase tracking-wider font-semibold">{{ $req->service_type }}</div>
+                                    <div class="text-[9px] text-brand-gray mt-0.5">Due: {{ $req->deadline ? $req->deadline->format('M d, Y') : 'N/A' }}</div>
+                                </td>
+                                <td class="py-3 text-brand-gray">
+                                    @if($req->payment_method)
+                                        <div class="font-semibold text-brand-white uppercase text-[10px]">{{ str_replace('_', ' ', $req->payment_method) }}</div>
+                                        <div class="text-[9px] text-brand-gray font-mono">TXID: {{ $req->payment_txid ?? 'N/A' }}</div>
+                                        @if($req->payment_proof)
+                                            <a href="/{{ $req->payment_proof }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] text-brand-cyan hover:underline mt-0.5">
+                                                📄 View Receipt Proof
+                                            </a>
+                                        @endif
+                                    @else
+                                        <span class="text-brand-gray italic text-[10px]">No Payment Info</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-center">
+                                    <div class="mb-1">
+                                        <span class="rounded px-2 py-0.5 text-[9px] uppercase font-bold
+                                            @if($req->payment_status === 'paid') bg-emerald-500/15 text-emerald-400 border border-emerald-500/30
+                                            @elseif($req->payment_status === 'pending') bg-amber-500/15 text-amber-400 border border-amber-500/30
+                                            @else bg-rose-500/15 text-rose-400 border border-rose-500/30
+                                            @endif">
+                                            Payment: {{ $req->payment_status }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="rounded px-2.5 py-0.5 text-[9px] uppercase font-bold bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/35">
+                                            Request: {{ $req->status }}
+                                        </span>
+                                    </div>
+                                </td>
                                 <td class="py-3 text-right">
-                                    <span class="rounded px-2.5 py-0.5 text-[9px] uppercase font-bold bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/35">
-                                        {{ $req->status }}
-                                    </span>
+                                    <div class="flex items-center justify-end gap-2">
+                                        @if($req->payment_status === 'pending')
+                                            <form action="{{ route('admin.service-request.approve-payment', $req->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="rounded bg-emerald-500/10 border border-emerald-500/35 hover:bg-emerald-500/20 px-2.5 py-1 text-[9px] font-bold text-emerald-400 transition-all">
+                                                    Approve Payment
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('admin.service-request.reject-payment', $req->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="rounded bg-rose-500/10 border border-rose-500/35 hover:bg-rose-500/20 px-2.5 py-1 text-[9px] font-bold text-rose-400 transition-all">
+                                                    Reject Payment
+                                                </button>
+                                            </form>
+                                        @elseif($req->payment_status === 'unpaid' && $req->status !== 'approved')
+                                            <form action="{{ route('admin.service-request.approve-payment', $req->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="rounded bg-brand-teal/10 border border-brand-teal/35 hover:bg-brand-teal/20 px-2.5 py-1 text-[9px] font-bold text-brand-cyan transition-all">
+                                                    Manual Provision
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="py-6 text-center text-brand-gray">No service request inbox items.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Partnership Requests Desk -->
+        <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 mt-6">
+            <h3 class="text-sm font-bold text-brand-white mb-4">Incoming Client Partnership Requests</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                    <thead class="text-[10px] uppercase font-bold text-brand-gray border-b border-brand-teal/10">
+                        <tr>
+                            <th class="pb-3">Partner Client</th>
+                            <th class="pb-3">Organization Details</th>
+                            <th class="pb-3">Partnership Classification</th>
+                            <th class="pb-3">E-Signature Validation</th>
+                            <th class="pb-3">Submission Date</th>
+                            <th class="pb-3 text-center">Status</th>
+                            <th class="pb-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-teal/5 text-brand-white">
+                        @forelse($partnershipRequests as $pReq)
+                            <tr>
+                                <td class="py-3 font-semibold">
+                                    {{ $pReq->user->name }}
+                                    <div class="text-[9px] text-brand-gray font-mono">{{ $pReq->user->email }}</div>
+                                </td>
+                                <td class="py-3 text-brand-gray">
+                                    <div class="font-semibold text-brand-white">{{ $pReq->company_name }}</div>
+                                    @if($pReq->website)
+                                        <a href="{{ $pReq->website }}" target="_blank" class="text-[9px] text-brand-cyan hover:underline font-mono">{{ $pReq->website }}</a>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-brand-cyan text-[10px] font-bold uppercase">{{ $pReq->partnership_type }}</td>
+                                <td class="py-3 text-brand-gray">
+                                    <span class="font-mono text-brand-cyan">/s/ {{ $pReq->signed_name }}</span>
+                                    <div class="text-[9px] text-brand-gray/60">Agreed to Terms</div>
+                                </td>
+                                <td class="py-3 text-brand-gray">{{ $pReq->created_at->format('M d, Y') }}</td>
+                                <td class="py-3 text-center">
+                                    <span class="rounded px-2.5 py-0.5 text-[9px] uppercase font-bold
+                                        @if($pReq->status === 'approved') bg-emerald-500/15 text-emerald-400 border border-emerald-500/30
+                                        @elseif($pReq->status === 'declined') bg-rose-500/15 text-rose-400 border border-rose-500/30
+                                        @else bg-amber-500/15 text-amber-400 border border-amber-500/30
+                                        @endif">
+                                        {{ $pReq->status }}
+                                    </span>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        @if($pReq->pdf_path)
+                                            <a href="/{{ $pReq->pdf_path }}" target="_blank" class="rounded bg-brand-teal/10 border border-brand-teal/30 hover:bg-brand-teal/20 px-2.5 py-1 text-[9px] font-bold text-brand-cyan transition-all">
+                                                📄 PDF
+                                            </a>
+                                        @endif
+
+                                        @if($pReq->status === 'pending')
+                                            <form action="{{ route('admin.portal-control.partnership.approve', $pReq->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="rounded bg-emerald-500/10 border border-emerald-500/35 hover:bg-emerald-500/20 px-2.5 py-1 text-[9px] font-bold text-emerald-400 transition-all">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('admin.portal-control.partnership.decline', $pReq->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="rounded bg-rose-500/10 border border-rose-500/35 hover:bg-rose-500/20 px-2.5 py-1 text-[9px] font-bold text-rose-400 transition-all">
+                                                    Decline
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-6 text-center text-brand-gray">No partnership requests pending.</td>
                             </tr>
                         @endforelse
                     </tbody>

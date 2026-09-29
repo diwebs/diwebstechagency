@@ -415,6 +415,18 @@ class CbtController extends Controller
             'is_read' => false
         ]);
 
+        \App\Models\AdminNotification::create([
+            'type' => 'cbt_center_application',
+            'title' => 'New CBT Center Partner Application: ' . $request->organization_name,
+            'details' => [
+                'user_name' => $user->name,
+                'email' => $user->email,
+                'organization_name' => $request->organization_name,
+                'center_type' => $request->center_type,
+                'systems_count' => $request->systems_count,
+            ]
+        ]);
+
         return redirect()->route('cbt.dashboard')->with('success', 'Your application to Become a CBT Center Partner has been received! Our inspect team will review your infrastructure parameters.');
     }
 

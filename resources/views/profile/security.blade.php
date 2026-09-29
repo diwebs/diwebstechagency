@@ -296,54 +296,109 @@
             },
 
             async registerNewPasskey() {
-                if (!this.newPasskeyName) {
-                    this.showFeedback('Please enter an identifier name for the passkey.', false);
+                if (!window.PublicKeyCredential) {
+                    this.showFeedback('Passkey registration is not supported on this browser. Please use Chrome, Edge, Safari, or Firefox.', false);
                     return;
                 }
-                
+
                 try {
-                    // Check WebAuthn APIs
-                    if (!window.PublicKeyCredential) {
-                        this.showFeedback('Passkeys are not supported on this device/browser.', false);
-                        return;
-                    }
-                    
-                    // Call register controller
-                    const chalResponse = await fetch('/profile/passkeys/challenge', {
+                    // Step 1 — Get creation challenge and options from the server
+                    const chalRes = await fetch('/profile/passkeys/challenge', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    const chalData = await chalResponse.json();
-                    if (!chalResponse.ok) throw new Error(chalData.message || 'Failed challenge retrieval.');
-                    
-                    alert('OS WebAuthn registry initiated. Registering cryptographic keypair for identifier: ' + this.newPasskeyName);
-                    
-                    // Send signature back to verify and store
-                    const verifyResponse = await fetch('/profile/passkeys/store', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
                         },
-                        body: JSON.stringify({ name: this.newPasskeyName, assertion: 'new_passkey_mock_signature' })
                     });
-                    
-                    const verifyData = await verifyResponse.json();
-                    if (verifyResponse.ok) {
-                        this.registeredPasskeys.push(verifyData.passkey);
+                    const chalData = await chalRes.json();
+                    if (!chalRes.ok) throw new Error(chalData.message || 'Could not start passkey registration.');
+
+                    // Step 2 — Base64url ↔ ArrayBuffer helpers
+                    function b64ToBuffer(b64url) {
+                        const b64 = (b64url + '===').slice(0, b64url.length + (4 - b64url.length % 4) % 4)
+                            .replace(/-/g, '+').replace(/_/g, '/');
+                        return Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+                    }
+                    function bufferToB64Url(buf) {
+                        return btoa(String.fromCharCode(...new Uint8Array(buf)))
+                            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                    }
+
+                    const createOptions = {
+                        challenge:   b64ToBuffer(chalData.challenge),
+                        rp:          chalData.rp,
+                        user: {
+                            id:          b64ToBuffer(chalData.user.id),
+                            name:        chalData.user.name,
+                            displayName: chalData.user.displayName,
+                        },
+                        pubKeyCredParams:    chalData.pubKeyCredParams,
+                        timeout:             chalData.timeout ?? 60000,
+                        attestation:         chalData.attestation ?? 'none',
+                        authenticatorSelection: chalData.authenticatorSelection ?? {
+                            authenticatorAttachment: 'platform',
+                            userVerification: 'required',
+                        },
+                        excludeCredentials: (chalData.excludeCredentials ?? []).map(c => ({
+                            type: 'public-key',
+                            id:   b64ToBuffer(c.id),
+                        })),
+                    };
+
+                    // Step 3 — Ask the OS to create a new passkey (triggers Windows Hello / Touch ID / Face ID)
+                    let credential;
+                    try {
+                        credential = await navigator.credentials.create({ publicKey: createOptions });
+                    } catch (domErr) {
+                        if (domErr.name === 'NotAllowedError') {
+                            throw new Error('Passkey registration was cancelled or timed out. Please try again.');
+                        }
+                        if (domErr.name === 'InvalidStateError') {
+                            throw new Error('This passkey is already registered on this device.');
+                        }
+                        if (domErr.name === 'SecurityError') {
+                            throw new Error('Passkey registration requires a secure connection (HTTPS).');
+                        }
+                        throw new Error(domErr.message || 'Your device could not complete passkey registration.');
+                    }
+
+                    // Step 4 — Extract the SPKI public key bytes from the authenticator response
+                    let publicKeySpki = '';
+                    if (credential.response.getPublicKey) {
+                        const spkiBuffer = credential.response.getPublicKey();
+                        if (spkiBuffer) publicKeySpki = bufferToB64Url(spkiBuffer);
+                    }
+
+                    // Step 5 — Send to server for verification and storage
+                    const payload = {
+                        credential_id:      bufferToB64Url(credential.rawId),
+                        client_data_json:   bufferToB64Url(credential.response.clientDataJSON),
+                        attestation_object: bufferToB64Url(credential.response.attestationObject),
+                        public_key_spki:    publicKeySpki,
+                        device_name:        this.newPasskeyName || null,
+                    };
+
+                    const storeRes = await fetch('/profile/passkeys/store', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const storeData = await storeRes.json();
+                    if (storeRes.ok) {
+                        this.registeredPasskeys.push(storeData.passkey);
                         this.newPasskeyName = '';
-                        this.showFeedback('New Biometric Passkey registered successfully.');
+                        this.showFeedback('✅ ' + (storeData.message || 'Passkey registered! You can now use your fingerprint or face to sign in.'));
                     } else {
-                        this.showFeedback(verifyData.message || 'Signature verification failed.', false);
+                        this.showFeedback(storeData.message || 'Passkey could not be saved. Please try again.', false);
                     }
                 } catch (err) {
-                    this.showFeedback(err.message || 'Failed to complete WebAuthn registration.', false);
+                    this.showFeedback(err.message || 'Passkey registration failed. Please try again.', false);
                 }
             },
 

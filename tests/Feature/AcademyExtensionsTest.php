@@ -100,6 +100,15 @@ class AcademyExtensionsTest extends TestCase
             'chapters' => []
         ]);
 
+        \App\Models\AcademyPlan::create([
+            'user_id' => $this->student->id,
+            'plan_name' => 'Premium Audio Plan',
+            'includes_live_class' => false,
+            'includes_audio' => true,
+            'includes_mentorship' => false,
+            'expires_at' => now()->addYear()
+        ]);
+
         $response = $this->actingAs($this->student)->get(route('academy.audio-learning'));
         $response->assertStatus(200);
         $response->assertSee('Advanced DB Scaling Podcast');
@@ -109,44 +118,54 @@ class AcademyExtensionsTest extends TestCase
     public function test_live_classes_dashboard_displays_schedules(): void
     {
         $teacher = AcademyTeacher::create([
-            'name' => 'David Miller',
+            'name'      => 'David Miller',
             'expertise' => 'Laravel, Docker',
-            'bio' => 'Senior architect.',
-            'role' => 'instructor'
+            'bio'       => 'Senior architect.',
+            'role'      => 'instructor'
         ]);
 
-        // 1. Check scheduled session (shows "Lock Pending")
+        // Assign a live-class plan to the student so they can access the sessions
+        \App\Models\AcademyPlan::create([
+            'user_id'             => $this->student->id,
+            'plan_name'           => 'Test Live Plan',
+            'includes_live_class' => true,
+            'includes_audio'      => true,
+            'includes_mentorship' => false,
+            'status'              => 'active',
+        ]);
+
+        // 1. Check scheduled session
         $sessionScheduled = AcademyLiveSession::create([
-            'title' => 'Kubernetes Deployments Deep-Dive (Scheduled)',
-            'teacher_id' => $teacher->id,
+            'title'            => 'Kubernetes Deployments Deep-Dive (Scheduled)',
+            'teacher_id'       => $teacher->id,
             'meeting_provider' => 'google_meet',
-            'meeting_url' => 'https://meet.google.com/xyz-uvwx-yza',
-            'date' => now()->addHour(),
+            'meeting_url'      => 'https://meet.google.com/xyz-uvwx-yza',
+            'date'             => now()->addHour(),
             'duration_minutes' => 60,
-            'session_type' => 'group_session',
-            'status' => 'scheduled'
+            'session_type'     => 'group_session',
+            'status'           => 'scheduled'
         ]);
 
         // 2. Check live session (shows "Enter Class" and meeting URL)
         $sessionLive = AcademyLiveSession::create([
-            'title' => 'Kubernetes Deployments Deep-Dive (Live)',
-            'teacher_id' => $teacher->id,
+            'title'            => 'Kubernetes Deployments Deep-Dive (Live)',
+            'teacher_id'       => $teacher->id,
             'meeting_provider' => 'google_meet',
-            'meeting_url' => 'https://meet.google.com/live-room-abc',
-            'date' => now(),
+            'meeting_url'      => 'https://meet.google.com/live-room-abc',
+            'date'             => now(),
             'duration_minutes' => 60,
-            'session_type' => 'group_session',
-            'status' => 'live'
+            'session_type'     => 'group_session',
+            'status'           => 'live'
         ]);
 
         $response = $this->actingAs($this->student)->get(route('academy.live-classes'));
         $response->assertStatus(200);
         $response->assertSee('Kubernetes Deployments Deep-Dive (Scheduled)');
-        $response->assertSee('Lock Pending');
         $response->assertSee('Kubernetes Deployments Deep-Dive (Live)');
         $response->assertSee('Enter Class');
         $response->assertSee('https://meet.google.com/live-room-abc');
     }
+
 
     public function test_student_can_book_coaching_session(): void
     {
@@ -245,5 +264,125 @@ class AcademyExtensionsTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonStructure(['reply']);
         $response->assertSee('recommend');
+    }
+
+    public function test_live_class_gate_blocks_students_without_plan(): void
+    {
+        // Student with NO live plan → should see the upgrade gate, not the sessions
+        $response = $this->actingAs($this->student)->get(route('academy.live-classes'));
+        $response->assertStatus(200);
+        $response->assertSee('Live Class Access Required');
+        $response->assertSee('Request Live Class Access');
+        $response->assertDontSee('Classroom Schedule');
+    }
+
+    public function test_academy_plan_creation_notifies_student(): void
+    {
+        // Admin assigns a plan → student gets in-app notification
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.academy-plans.store'), [
+                'user_id'             => $this->student->id,
+                'plan_name'           => 'Full Bootcamp Access',
+                'includes_live_class' => '1',
+                'includes_audio'      => '1',
+                'includes_mentorship' => '1',
+                'expires_at'          => now()->addMonths(3)->format('Y-m-d'),
+            ]);
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('academy_plans', [
+            'user_id'             => $this->student->id,
+            'plan_name'           => 'Full Bootcamp Access',
+            'includes_live_class' => true,
+            'status'              => 'active',
+        ]);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $this->student->id,
+            'type'    => 'plan',
+            'is_read' => false,
+        ]);
+    }
+
+    public function test_admin_can_send_direct_email_to_user(): void
+    {
+        // Use mail fake to prevent actual SMTP calls
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.notifications.send-email'), [
+                'user_id' => $this->student->id,
+                'subject' => 'Your Project is Ready',
+                'message' => 'Hello, your project has been completed and is ready for review.',
+            ]);
+
+        $response->assertStatus(302);
+
+        // In-app notification should always be created
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $this->student->id,
+            'title'   => 'Your Project is Ready',
+            'type'    => 'email',
+            'is_read' => false,
+        ]);
+    }
+
+    public function test_student_can_mark_notification_as_read(): void
+    {
+        $notif = \App\Models\UserNotification::create([
+            'user_id' => $this->student->id,
+            'title'   => 'Test Alert',
+            'message' => 'This is a test notification.',
+            'type'    => 'broadcast',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($this->student)
+            ->post(route('academy.notifications.read', $notif->id));
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('user_notifications', [
+            'id'      => $notif->id,
+            'is_read' => true,
+        ]);
+    }
+
+    public function test_admin_can_set_session_idle_timeout(): void
+
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.settings.update'), [
+                'app_name' => 'New App Name Branding',
+                'referral_bonus_amount' => '45.00',
+                'session_idle_timeout' => '30', // 30 minutes
+            ]);
+
+        $response->assertStatus(302);
+        $this->assertEquals(30, \App\Helpers\SettingsHelper::get('session_idle_timeout'));
+    }
+
+    public function test_session_idle_timeout_redirects_to_intended_url(): void
+    {
+        // 1. Set the session timeout to 1 minute (60 seconds)
+        \App\Helpers\SettingsHelper::set('session_idle_timeout', 1);
+
+        // 2. Act as student and hit a page, sets last activity time
+        $this->actingAs($this->student);
+        $response = $this->get(route('academy.courses'));
+        $response->assertStatus(200);
+
+        // 3. Move activity time back to exceed 1 minute (e.g. 65 seconds ago)
+        session(['last_activity_time' => now()->timestamp - 65]);
+
+        // 4. Hit another page - middleware should detect inactivity timeout, logout user, and save intended URL
+        $response = $this->get(route('academy.assignments'));
+        $response->assertRedirect(route('login'));
+        $this->assertFalse(\Illuminate\Support\Facades\Auth::check());
+
+        // Intended URL should be stored in session
+        $this->assertTrue(session()->has('session_expired_redirect_url'));
+        $this->assertEquals(route('academy.assignments'), session('session_expired_redirect_url'));
     }
 }

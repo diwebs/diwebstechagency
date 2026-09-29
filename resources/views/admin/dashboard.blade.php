@@ -46,7 +46,9 @@
     </div>
 
     <!-- Google Analytics Web Traffic Insights -->
-    <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 mb-8">
+    <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 mb-8"
+         x-data="telemetryManager()"
+         x-init="initTelemetry()">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-brand-teal/10">
             <div>
                 <h3 class="text-sm font-semibold uppercase text-brand-cyan tracking-wider flex items-center gap-2">
@@ -81,7 +83,7 @@
             <div class="bg-brand-dark-secondary/35 rounded-xl border border-brand-teal/10 p-4 relative overflow-hidden">
                 <span class="block text-[10px] uppercase font-bold text-brand-gray tracking-wider">Active Users (Real-time)</span>
                 <div class="flex items-baseline gap-2 mt-2">
-                    <strong class="text-3xl font-extrabold text-brand-white">18</strong>
+                    <strong class="text-3xl font-extrabold text-brand-white" x-text="activeUsers">18</strong>
                     <span class="text-xs text-emerald-400 font-bold flex items-center gap-1">
                         <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
                         Live
@@ -93,21 +95,21 @@
             <!-- Page Views -->
             <div class="bg-brand-dark-secondary/35 rounded-xl border border-brand-teal/10 p-4">
                 <span class="block text-[10px] uppercase font-bold text-brand-gray tracking-wider">Total Page Views (24h)</span>
-                <strong class="block text-3xl font-extrabold text-brand-white mt-2">1,429</strong>
-                <span class="block text-[10px] text-emerald-400 font-bold mt-1">↑ 14.8% since yesterday</span>
+                <strong class="block text-3xl font-extrabold text-brand-white mt-2" x-text="pageViews">1,429</strong>
+                <span class="block text-[10px] text-emerald-400 font-bold mt-1" x-text="pageViewsGrowth">↑ 14.8% since yesterday</span>
             </div>
 
             <!-- Avg Session Duration -->
             <div class="bg-brand-dark-secondary/35 rounded-xl border border-brand-teal/10 p-4">
                 <span class="block text-[10px] uppercase font-bold text-brand-gray tracking-wider">Avg. Session Duration</span>
-                <strong class="block text-3xl font-extrabold text-brand-white mt-2">4m 32s</strong>
+                <strong class="block text-3xl font-extrabold text-brand-white mt-2" x-text="sessionDuration">4m 32s</strong>
                 <span class="block text-[10px] text-brand-cyan font-bold mt-1">Highly engaged LMS learning sessions</span>
             </div>
 
             <!-- Bounce Rate -->
             <div class="bg-brand-dark-secondary/35 rounded-xl border border-brand-teal/10 p-4">
                 <span class="block text-[10px] uppercase font-bold text-brand-gray tracking-wider">Bounce Rate</span>
-                <strong class="block text-3xl font-extrabold text-brand-white mt-2">24.5%</strong>
+                <strong class="block text-3xl font-extrabold text-brand-white mt-2" x-text="bounceRate">24.5%</strong>
                 <span class="block text-[10px] text-emerald-400 font-bold mt-1">↓ 2.1% (Exceeds industry standard)</span>
             </div>
         </div>
@@ -117,24 +119,22 @@
             <!-- Simulated CSS Bar Chart (Hourly Pageviews) -->
             <div class="lg:col-span-2 rounded-xl border border-brand-teal/10 bg-brand-dark-secondary/40 p-4">
                 <h4 class="text-xs font-bold uppercase text-brand-cyan tracking-wider mb-4">Hourly Traffic Waveform</h4>
-                <div class="flex items-end justify-between h-40 pt-4 border-b border-brand-teal/10">
-                    @foreach([35, 42, 28, 55, 68, 80, 72, 95, 110, 124, 118, 90] as $percent)
-                        <div class="w-[6%] bg-gradient-to-t from-brand-teal/40 to-brand-cyan/90 rounded-t-sm hover:opacity-80 transition-all relative group cursor-pointer" style="height: {{ $percent }}%;">
+                <div class="flex items-end justify-between h-40 pt-4 border-b border-brand-teal/10 gap-1.5">
+                    <template x-for="(val, idx) in hourlyData" :key="idx">
+                        <div class="w-[6%] bg-gradient-to-t from-brand-teal/40 to-brand-cyan/95 rounded-t-sm hover:opacity-80 transition-all relative group cursor-pointer" 
+                             :style="'height: ' + Math.min(100, Math.max(10, val / 1.5)) + '%'">
                             <!-- Tooltip -->
-                            <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-dark border border-brand-cyan/20 px-2 py-0.5 rounded text-[10px] text-brand-white font-bold opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg">
-                                {{ round($percent * 1.5) }} views
+                            <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-brand-dark border border-brand-cyan/20 px-2 py-0.5 rounded text-[10px] text-brand-white font-bold opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg whitespace-nowrap z-10"
+                                 x-text="val + ' views'">
                             </div>
                         </div>
-                    @endforeach
+                    </template>
                 </div>
                 <!-- Hour Labels -->
                 <div class="flex justify-between text-[10px] text-brand-gray/50 mt-2 font-mono">
-                    <span>06:00</span>
-                    <span>09:00</span>
-                    <span>12:00</span>
-                    <span>15:00</span>
-                    <span>18:00</span>
-                    <span>21:00</span>
+                    <template x-for="(label, idx) in hourlyLabels" :key="idx">
+                        <span x-text="label"></span>
+                    </template>
                 </div>
             </div>
 
@@ -142,22 +142,18 @@
             <div class="rounded-xl border border-brand-teal/10 bg-brand-dark-secondary/40 p-4">
                 <h4 class="text-xs font-bold uppercase text-brand-cyan tracking-wider mb-4">Traffic Acquisition Channels</h4>
                 <div class="space-y-3">
-                    @foreach([
-                        ['Direct Browser Session', '42%', 'w-[42%]'],
-                        ['Google Organic Search', '28%', 'w-[28%]'],
-                        ['LinkedIn Referrals', '18%', 'w-[18%]'],
-                        ['Other Search/Social', '12%', 'w-[12%]']
-                    ] as [$source, $share, $barWidth])
+                    <template x-for="(ch, idx) in acquisition" :key="idx">
                         <div class="text-xs">
                             <div class="flex justify-between text-[11px] text-brand-white mb-1.5">
-                                <span>{{ $source }}</span>
-                                <span class="font-bold text-brand-cyan">{{ $share }}</span>
+                                <span x-text="ch.name"></span>
+                                <span class="font-bold text-brand-cyan" x-text="ch.share"></span>
                             </div>
                             <div class="w-full h-1.5 bg-brand-dark rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-brand-teal to-brand-cyan rounded-full {{ $barWidth }}"></div>
+                                <div class="h-full bg-gradient-to-r from-brand-teal to-brand-cyan rounded-full transition-all duration-700" 
+                                     :style="'width: ' + ch.width"></div>
                             </div>
                         </div>
-                    @endforeach
+                    </template>
                 </div>
             </div>
         </div>
@@ -261,7 +257,126 @@
                     </tbody>
                 </table>
             </div>
+        <!-- Recent Form Submissions & Notifications Feed -->
+        <div class="glass-card rounded-2xl p-6 border border-brand-teal/15 mt-8">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-brand-teal/10">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">📩</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-brand-white">Recent Website &amp; Client Form Submissions</h3>
+                        <p class="text-[11px] text-brand-gray mt-0.5">Live feed of all forms submitted across the portal, contact forms, and client services.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    @if(isset($unreadNotificationCount) && $unreadNotificationCount > 0)
+                        <span class="rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 font-bold text-[10px] px-2.5 py-1">
+                            {{ $unreadNotificationCount }} New Unread
+                        </span>
+                    @endif
+                    <a href="{{ route('admin.notifications') }}" class="text-xs text-brand-cyan hover:underline font-bold">
+                        View All System Notifications →
+                    </a>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                @forelse($recentNotifications as $notif)
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-brand-teal/10 bg-brand-dark-secondary/30 hover:border-brand-cyan/30 transition-all">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <span class="mt-0.5 flex-shrink-0 text-sm">
+                                @if($notif->type === 'contact_form') 📩
+                                @elseif($notif->type === 'newsletter_subscribe') 📬
+                                @elseif($notif->type === 'user_register') 👤
+                                @elseif($notif->type === 'project_create') 🚀
+                                @elseif($notif->type === 'service_request') 💼
+                                @elseif($notif->type === 'support_ticket') 🎫
+                                @elseif($notif->type === 'partnership_request') 🤝
+                                @elseif($notif->type === 'customer_review') ⭐
+                                @elseif($notif->type === 'academy_booking') 📅
+                                @elseif($notif->type === 'course_enrollment') 🎓
+                                @elseif($notif->type === 'cbt_center_application') 🏢
+                                @else 🔔
+                                @endif
+                            </span>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs font-bold text-brand-white">{{ $notif->title }}</span>
+                                    @if(!$notif->is_read)
+                                        <span class="rounded bg-amber-950 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 text-[8px] font-bold uppercase">New</span>
+                                    @endif
+                                </div>
+                                <div class="text-[11px] text-brand-gray mt-1 font-mono leading-relaxed">
+                                    @if(is_array($notif->details))
+                                        @foreach(array_slice($notif->details, 0, 4) as $key => $val)
+                                            @if(!is_array($val) && !is_object($val))
+                                                <span class="inline-block mr-3">
+                                                    <span class="text-brand-cyan">{{ ucwords(str_replace('_', ' ', $key)) }}:</span> {{ $val }}
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-brand-gray/70 font-mono shrink-0">
+                            {{ $notif->created_at->diffForHumans() }}
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-6 text-brand-gray text-xs">
+                        No recent form submissions recorded.
+                    </div>
+                @endforelse
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    function telemetryManager() {
+        return {
+            activeUsers: 18,
+            pageViews: '1,429',
+            pageViewsGrowth: '↑ 14.8% since yesterday',
+            sessionDuration: '4m 32s',
+            bounceRate: '24.5%',
+            hourlyData: [35, 42, 28, 55, 68, 80, 72, 95, 110, 124, 118, 90],
+            hourlyLabels: ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+            acquisition: [
+                { name: 'Direct Browser Session', share: '42%', width: '42%', val: 42 },
+                { name: 'Google Organic Search', share: '28%', width: '28%', val: 28 },
+                { name: 'LinkedIn Referrals', share: '18%', width: '18%', val: 18 },
+                { name: 'Other Search/Social', share: '12%', width: '12%', val: 12 }
+            ],
+            
+            async initTelemetry() {
+                // Fetch immediately
+                await this.fetchData();
+                // Poll every 8 seconds
+                setInterval(async () => {
+                    await this.fetchData();
+                }, 8000);
+            },
+            
+            async fetchData() {
+                try {
+                    const res = await fetch('{{ route("admin.telemetry") }}');
+                    const data = await res.json();
+                    if (res.ok) {
+                        this.activeUsers = data.active_users;
+                        this.pageViews = data.page_views;
+                        this.pageViewsGrowth = data.page_views_growth;
+                        this.sessionDuration = data.session_duration;
+                        this.bounceRate = data.bounce_rate;
+                        this.hourlyData = data.hourly_data;
+                        this.hourlyLabels = data.hourly_labels;
+                        this.acquisition = data.acquisition;
+                    }
+                } catch(e) {
+                    console.error('Failed to fetch telemetry data:', e);
+                }
+            }
+        };
+    }
+</script>
 @endsection

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="google-adsense-account" content="ca-pub-8706158454096161">
     
     <!-- Dynamic SEO Management -->
     <title>@yield('title', 'Diwebs Tech Agency - Digital Ecosystem'){{ \App\Helpers\SettingsHelper::get('seo_meta_title_suffix', ' | Diwebs Tech Agency') }}</title>
@@ -410,6 +411,8 @@
     </div>
 
     <!-- World-Class Enterprise Footer -->
+    @if(!$isDashboard && !request()->is('register*') && !request()->is('login*') && !request()->is('password*'))
+
     <footer x-data="{
                 activeAccordion: null,
                 toggleAccordion(i) { this.activeAccordion = this.activeAccordion === i ? null : i; },
@@ -530,21 +533,27 @@
                                class="w-full rounded-xl border border-brand-teal/20 bg-[#25282D]/60 px-4 py-3 text-xs text-brand-white placeholder-[#94A3B8]/35 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan/25 transition-all">
                         <button type="submit" :disabled="submitting"
                                 class="w-full rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan px-4 py-3 text-xs font-bold text-brand-dark-secondary hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2">
-                            <span x-show="!submitting">📬 Subscribe to Newsletter</span>
+                            <span x-show="!submitting" class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                Subscribe to Newsletter
+                            </span>
                             <span x-show="submitting" class="flex items-center gap-2" style="display:none;">
                                 <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-dark-secondary border-t-transparent"></span> Subscribing...
                             </span>
                         </button>
                         <div x-show="subscribeStatus === 'success'" x-transition class="flex items-start gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5" style="display:none;">
-                            <span class="text-emerald-400 text-sm">✔</span>
-                            <span class="text-[11px] text-emerald-300 font-medium leading-relaxed" x-text="subscribeMessage"></span>
+                            <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            <span class="text-xs text-emerald-300 font-medium leading-relaxed" x-text="subscribeMessage"></span>
                         </div>
                         <div x-show="subscribeStatus === 'error'" x-transition class="flex items-start gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 px-3 py-2.5" style="display:none;">
-                            <span class="text-rose-400 text-sm">⚠</span>
-                            <span class="text-[11px] text-rose-300 font-medium leading-relaxed" x-text="subscribeMessage"></span>
+                            <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span class="text-xs text-rose-300 font-medium leading-relaxed" x-text="subscribeMessage"></span>
                         </div>
                     </form>
-                    <p class="text-[10px] text-[#94A3B8]/35 leading-relaxed">🔒 Zero spam. Unsubscribe anytime. We never share your data.</p>
+                    <p class="text-xs text-[#94A3B8]/50 leading-relaxed flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-brand-teal inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Zero spam. Unsubscribe anytime. We never share your data.
+                    </p>
 
                     {{-- Auth CTA --}}
                     <div class="pt-2 border-t border-white/5 space-y-2">
@@ -568,6 +577,7 @@
                             <li><a href="{{ route('contact') }}"   class="flex items-center gap-2 text-[#94A3B8]/75 hover:text-brand-cyan hover:translate-x-1 transition-all duration-200"><span class="text-brand-teal/50 font-bold">›</span>Contact</a></li>
                             <li><a href="{{ route('news.index') }}" class="flex items-center gap-2 text-[#94A3B8]/75 hover:text-brand-cyan hover:translate-x-1 transition-all duration-200"><span class="text-brand-teal/50 font-bold">›</span>Newsroom</a></li>
                             <li><a href="{{ route('careers') }}"    class="flex items-center gap-2 text-[#94A3B8]/75 hover:text-brand-cyan hover:translate-x-1 transition-all duration-200"><span class="text-brand-teal/50 font-bold">›</span>Careers</a></li>
+                            <li><a href="{{ route('docs') }}"       class="flex items-center gap-2 text-[#94A3B8]/75 hover:text-brand-cyan hover:translate-x-1 transition-all duration-200"><span class="text-brand-teal/50 font-bold">›</span>Documentation</a></li>
                         </ul>
                     </div>
                 </div>
@@ -627,6 +637,8 @@
                     <a href="{{ route('legal.show', 'cookie-settings') }}" class="hover:text-brand-cyan transition-colors">Cookie Settings</a>
                     <span class="text-white/10">·</span>
                     <a href="{{ route('legal.show', 'platform-security') }}" class="hover:text-brand-cyan transition-colors">Platform Security</a>
+                    <span class="text-white/10">·</span>
+                    <a href="{{ route('docs') }}" class="hover:text-brand-cyan transition-colors">Documentation</a>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-[#94A3B8]/25">v1.0.0</span>
@@ -710,6 +722,7 @@
         @endif
 
     </footer>
+    @endif
 
     <!-- Service Worker and PWA Orchestration Script -->
     <script>
@@ -792,6 +805,84 @@
                 }
             };
         }
+    @if(request()->routeIs('home') || request()->is('/'))
+    <!-- Cookie Policy Banner - Displayed Only on Homepage -->
+    <div x-data="cookieConsentManager()"
+         x-show="showBanner"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-full opacity-0"
+         class="fixed bottom-4 left-4 right-4 md:left-6 md:right-auto md:max-w-xl z-50 glass-card p-6 rounded-3xl border border-brand-teal/30 shadow-2xl bg-brand-dark/95 backdrop-blur-xl"
+         style="display: none;">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 h-11 w-11 rounded-2xl bg-brand-teal/15 border border-brand-teal/30 flex items-center justify-center text-brand-cyan">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-base font-bold text-brand-white">Cookie Policy &amp; Privacy Choices</h4>
+                    <button @click="dismissBanner()" class="text-brand-gray hover:text-brand-white text-sm p-1 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <p class="text-xs text-brand-gray mt-1.5 leading-relaxed">
+                    We use essential cookies and telemetry storage to optimize your site experience, process CBT sessions, and analyze platform performance. By clicking <strong>"Accept All Cookies"</strong>, you agree to our storage practices.
+                </p>
+                
+                <div class="mt-4 flex items-center gap-3 flex-wrap">
+                    <button @click="acceptAll()" 
+                            class="rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan px-4.5 py-2.5 text-xs font-bold text-brand-dark-secondary hover:opacity-90 transition-all shadow-md cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Accept All Cookies
+                    </button>
+                    
+                    <button @click="acceptEssential()" 
+                            class="rounded-xl bg-brand-dark-secondary border border-brand-teal/20 px-4 py-2.5 text-xs font-semibold text-brand-gray hover:text-brand-white hover:border-brand-teal/40 transition-all cursor-pointer">
+                        Essential Only
+                    </button>
+
+                    <a href="{{ route('legal.show', 'cookie-settings') }}" 
+                       class="text-xs text-brand-cyan hover:underline font-semibold ml-auto whitespace-nowrap">
+                        Read Policy →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function cookieConsentManager() {
+            return {
+                showBanner: false,
+                init() {
+                    const consent = localStorage.getItem('diwebs_cookie_consent');
+                    if (!consent) {
+                        setTimeout(() => {
+                            this.showBanner = true;
+                        }, 1200);
+                    }
+                },
+                acceptAll() {
+                    localStorage.setItem('diwebs_cookie_consent', 'accepted_all');
+                    localStorage.setItem('diwebs_cookie_consent_time', new Date().toISOString());
+                    this.showBanner = false;
+                },
+                acceptEssential() {
+                    localStorage.setItem('diwebs_cookie_consent', 'essential_only');
+                    localStorage.setItem('diwebs_cookie_consent_time', new Date().toISOString());
+                    this.showBanner = false;
+                },
+                dismissBanner() {
+                    this.showBanner = false;
+                }
+            };
+        }
     </script>
+    @endif
 </body>
 </html>

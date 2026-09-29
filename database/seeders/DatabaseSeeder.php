@@ -16,38 +16,46 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Seed Users for each role
-        $admin = User::create([
-            'name' => 'Diwebs Administrator',
-            'email' => 'admin@diwebstechagency.website',
-            'password' => 'password',
-            'role' => 'super_admin',
-            'status' => 'active'
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@diwebstechagency.website'],
+            [
+                'name' => 'Diwebs Administrator',
+                'password' => 'password',
+                'role' => 'super_admin',
+                'status' => 'active'
+            ]
+        );
 
-        $student = User::create([
-            'name' => 'Tobi Alabi',
-            'email' => 'student@diwebstechagency.website',
-            'password' => 'password',
-            'role' => 'student',
-            'status' => 'active'
-        ]);
+        $student = User::firstOrCreate(
+            ['email' => 'student@diwebstechagency.website'],
+            [
+                'name' => 'Tobi Alabi',
+                'password' => 'password',
+                'role' => 'student',
+                'status' => 'active'
+            ]
+        );
 
-        $client = User::create([
-            'name' => 'Sarah Jenkins (E-Gov Group)',
-            'email' => 'client@diwebstechagency.website',
-            'password' => 'password',
-            'role' => 'client',
-            'status' => 'active',
-            'referral_code' => 'REF-SARAH1'
-        ]);
+        $client = User::firstOrCreate(
+            ['email' => 'client@diwebstechagency.website'],
+            [
+                'name' => 'Sarah Jenkins (E-Gov Group)',
+                'password' => 'password',
+                'role' => 'client',
+                'status' => 'active',
+                'referral_code' => 'REF-SARAH1'
+            ]
+        );
 
-        $candidate = User::create([
-            'name' => 'Michael Okafor',
-            'email' => 'candidate@diwebstechagency.website',
-            'password' => 'password',
-            'role' => 'candidate',
-            'status' => 'active'
-        ]);
+        $candidate = User::firstOrCreate(
+            ['email' => 'candidate@diwebstechagency.website'],
+            [
+                'name' => 'Michael Okafor',
+                'password' => 'password',
+                'role' => 'candidate',
+                'status' => 'active'
+            ]
+        );
 
         // 2. Seed CBT Centers & Seats & Devices
         $center1 = \App\Models\CbtCenter::create([
@@ -321,6 +329,10 @@ class DatabaseSeeder extends Seeder
             'comment' => 'Incredible response times and highly skilled software engineers. They turned our complex logistics pipeline request into a sleek dynamic dashboard.',
             'status' => 'approved'
         ]);
+
+        // Call the Staff Management Seeder
+        $this->call(StaffManagementSeeder::class);
+        $this->call(CrmDatabaseSeeder::class);
     }
 }
 

@@ -190,9 +190,10 @@ code{background:#21262d;padding:2px 6px;border-radius:4px;font-size:13px}
 <div class="next">
     <h2>🚀 Next Steps</h2>
     <ol>
-        <li>Visit the installer: <a href="/install" target="_blank">https://diwebstechagency.website/install</a></li>
+        <li>Visit the installer to configure database: <a href="/install" target="_blank">https://diwebstechagency.website/install</a></li>
         <li>Configure your MySQL database credentials</li>
         <li>Create your admin account</li>
+        <li>If database credentials are already set up in <code>.env</code>, you can run the secure migration and SQLite-to-MySQL data copy directly: <a href="/run-migrations-securely?token=diwebs-secure-mig-2026&migrate_sqlite=1" target="_blank"><b>Run SQLite to MySQL Database Migration & Data Import</b></a></li>
         <li><strong>Delete this file immediately:</strong> <code>public_html/public/setup.php</code></li>
     </ol>
 </div>
